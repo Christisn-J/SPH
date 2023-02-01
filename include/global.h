@@ -1,6 +1,10 @@
+//
+// Created by Christian Jetter on 23.01.23
+//
+
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#define DIM 3
+#include <parameter.h>
 
-#endif
+#endif // GLOBAL_H

@@ -2,9 +2,6 @@
 // Created by Christian Jetter on 30.01.23
 //
 
-
-// Github test
-
 // std libraries c++
 #include <iostream>
 #include <cmath>

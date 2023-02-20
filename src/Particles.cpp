@@ -71,7 +71,6 @@ Particles::~Particles() {
 void Particles::compNN(const double &h){
     // loop over particles
     for(int i=0; i<N; ++i){
-        Logger(DEBUG) << "i " << i;
 #if NN_SEARCH == PROTFORCE
         // seachr nearest neighbor
         int interact = 0;
@@ -86,11 +85,12 @@ void Particles::compNN(const double &h){
                 
                 nnl[i * N+interact] = n;
                 ++ interact;
-                Logger(DEBUG) << "end " << nnl[i * N+interact];
+                
             }
         }
-        
         noi[i] = interact;
+        
+        Logger(DEBUG) << i  << " noi "<< noi[i];
 #endif // PROTFORCE
     }
 
@@ -99,7 +99,9 @@ void Particles::compNN(const double &h){
 void Particles::compDensity(const double &h){
     for(int i=0; i<N; ++i){
         rho[i] = m[i]*kernel(distance(i,nnl[i]),h);
-
+#if DEBUG_LVL == 2
+        Logger(DEBUG) << i << " rho "<< rho[i]; 
+#endif
         if(rho[i] <= 0.){
             Logger(WARN) << "Zero or negative density @" << i;
         }
@@ -213,15 +215,17 @@ void Particles::gradient(double *f, double (*grad)[DIM]){
 
 void Particles::accelerate(const double &h){
     for(int i=0; i<N; ++i){
-        vx[i] = 0;
-
+        for(int n=0; n<nnl[i]; n++){
+            vx[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
+        
 #if DIM >= 2
-        vy[i] = 0;
+            vy[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
 #endif // 2D
 
 #if DIM == 3
-        vz[i] = 0;
+            vz[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
 #endif // 3D
+        }
     }
 }
 

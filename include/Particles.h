@@ -55,6 +55,7 @@ private:
     int *noi; // number of interactionsdouble 
     
     double (*kernel)(const double&, const double&){ &Kernel::cubicSpline };
+    double (*dKernel)(const double&, const double&){ &dKernel::cubicSpline };
 
     double distance(const int i, const int n);
 

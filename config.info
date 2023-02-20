@@ -1,0 +1,23 @@
+; h5 file containing the initial particle distribution
+initFile ./out/N1002D.h5
+
+; output directory for particle distribution h5 files
+outDir out
+
+; fixed time step
+timeStep 1.0
+
+; end of the simulation
+timeEnd 3.0
+
+; output particle distribution each h5DumpInterval steps
+storeFrequency 5
+
+; maximum number of interactions for each particle
+maxInteractions 400
+
+; kernel size for meshless scheme
+h 0.5
+
+; adiabatic index
+gamma 1.6666666666666667

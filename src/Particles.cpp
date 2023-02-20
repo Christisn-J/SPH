@@ -18,17 +18,20 @@ Particles::Particles(int nParticles, Configuration config) : N { nParticles }, M
 
     x = new double[N];
     vx = new double[N];
+    vxDelta = new double[N];
     vxGrad = new double[N][DIM];
     
 #if DIM >= 2
     y = new double[N];
     vy = new double[N];
+    vyDelta = new double[N];
     vyGrad = new double[N][DIM];
 #endif // 2D
 
 #if DIM == 3
     z = new double[N];
     vz = new double[N];
+    vzDelta = new double[N];
     vzGrad = new double[N][DIM];
 #endif // 3D
 
@@ -49,17 +52,20 @@ Particles::~Particles() {
 
     delete[] x;
     delete[] vx;
+    delete[] vxDelta;
     delete[] vxGrad;
 
 #if DIM >= 2
     delete[] y;
     delete[] vy;
+    delete[] vyDelta;
     delete[] vyGrad;
 #endif // 2D
 
 #if DIM == 3
         delete[] z;
         delete[] vz;
+        delete[] vzDelta;
         delete[] vzGrad;
 #endif // 3D
 
@@ -216,14 +222,14 @@ void Particles::gradient(double *f, double (*grad)[DIM]){
 void Particles::accelerate(const double &h){
     for(int i=0; i<N; ++i){
         for(int n=0; n<nnl[i]; n++){
-            vx[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
+            vxDelta[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
         
 #if DIM >= 2
-            vy[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
+            vyDelta[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
 #endif // 2D
 
 #if DIM == 3
-            vz[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
+            vzDelta[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
 #endif // 3D
         }
     }
@@ -231,23 +237,46 @@ void Particles::accelerate(const double &h){
 
 void Particles::damping(const double &h){
     for(int i=0; i<N; ++i){
-        x[i] = x[i];
-        vx[i] = vx[i];
+        vxDelta[i] = vxDelta[i];
 
 #if DIM >= 2
-        y[i] = y[i];
-        vy[i] = vy[i];
+        vyDelta[i] = vyDelta[i];
 #endif // 2D
 
 #if DIM == 3
-        z[i] = z[i];
-        vz[i] = vz[i];
+        vzDelta[i] = vzDelta[i];
 #endif // 3D
     }
 }
 
-void Particles::integrate(const double &t){
-    // TODO
+void Particles::integrate(const double &dt){
+    // Eulerstep
+    // update velossity
+    for(int i=0; i<N; ++i ){
+        vx[i] = vx[i] + dt * vxDelta[i];
+
+#if DIM >= 2
+        vy[i] = vy[i] + dt * vyDelta[i];
+#endif // 2D
+
+#if DIM == 3
+        vz[i] = vz[i] + dt * vzDelta[i];
+#endif // 3D
+    }
+    
+    // update possition
+    for(int i=0; i<N; ++i ){
+        x[i] = x[i]+ dt*vx[i];
+
+#if DIM >= 2
+        y[i] = y[i]+ dt*vy[i];
+#endif // 2D
+
+#if DIM == 3
+        z[i] = z[i]+ dt*vz[i];
+#endif // 3D
+    }
+
 }
 
 void Particles::save(std::string filename, double simTime){

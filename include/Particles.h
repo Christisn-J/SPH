@@ -19,16 +19,16 @@ public:
     ~Particles();
         
     int N, MAX_INTERACTIONS;
-    double *m, *u, *x, *vx, *rho, *P;
+    double *m, *u, *x, *vx, *vxDelta, *rho, *P;
     double (*rhoGrad)[DIM], (*vxGrad)[DIM], (*PGrad)[DIM];
 
 #if DIM >= 2
-    double *y, *vy;
+    double *y, *vy, *vyDelta;
     double (*vyGrad)[DIM];
 #endif // 2D
 
 #if DIM == 3
-    double *z, *vz;
+    double *z, *vz, *vzDelta;
     double (*vzGrad)[DIM];
 #endif // 3D
 

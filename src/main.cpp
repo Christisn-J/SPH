@@ -17,7 +17,7 @@
 #include "../include/global.h"
 #include "../include/Particles.h"
 #include "../include/kernel.h"
-#include "../include/boundary.h"
+#include "../include/Boundary.h"
 #include "../include/lib.h"
 #include "../include/tools.h"
 

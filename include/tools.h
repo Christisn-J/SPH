@@ -11,6 +11,6 @@
 #include "ConfigParser.h"
 #include "lib.h"
 
-void run(ConfigParser::Configuration config, Particles particles);
+void algorithm(Configuration config, Particles particles);
 
 #endif // TOOLS_H

@@ -1,5 +1,5 @@
 //
-// test
+// Created by Christian Jetter on 30.01.23
 //
 
 // std libraries c++
@@ -12,7 +12,7 @@
 // by Johannes Martin
 #include "../include/ConfigParser.h"
 #include "../include/Logger.h"
-#include "../include/h5.h"
+#include "../include/H5.h"
 
 #include "../include/global.h"
 #include "../include/Particles.h"
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
 
     // instantiation ConfigParser
     ConfigParser read { cmdLineOpts["config"].as<std::string>() };
-    ConfigParser::Configuration config;
+    Configuration config;
 
     config.initFile = read.getVal<std::string>("initFile");
     Logger(INFO) << "    > Initial distribution: " << config.initFile;
@@ -70,27 +70,31 @@ int main(int argc, char *argv[]){
     Logger(INFO) << "    > Time step: " << config.timeStep;
     config.timeEnd = read.getVal<double>("timeEnd");
     Logger(INFO) << "    > End of simulation: " << config.timeEnd;
-    config.h = read.getVal<double>("kernelSize");
+    config.storeFrequency = read.getVal<int>("storeFrequency");
+    Logger(INFO) << "    > Store data to h5 file every " << config.storeFrequency << " steps";
+    config.maxInteractions = read.getVal<int>("maxInteractions");
+    Logger(INFO) << "    > Max number of Interactions: " << config.maxInteractions;
+    config.h = read.getVal<double>("h");
     Logger(INFO) << "    > Using global kernel size h = " << config.h;
     config.gamma = read.getVal<double>("gamma");
     Logger(INFO) << "    > Adiabatic index for ideal gas EOS gamma = " << config.gamma;
 
 // initialize -------------------------------------------------------------------------------------------------
+    H5 distribuition;
     Logger(INFO) << "Initializing simulation ...";
     // load inital conditions
-    load(config.initFile);
+    distribuition.load(config.initFile);
     // instantiation Particles
-    Particles sampel = Particles(nParticles);
+    Particles sampel = Particles(distribuition.getN(), config);
     // initialize the loaded conditions
-    initialize(sampel);
+    distribuition.initialize(sampel);
 
     Logger(INFO) << "    > N = " << sampel.N;
     Logger(INFO) << "... done.";
 
 // simulation ------------------------------------------------------------------------------------------------
-
     Logger(INFO) << "Starting simulation ...";
-    run(config, sampel);
+    algorithm(config, sampel);
     Logger(INFO) << "... done.";    
         
     return 0;

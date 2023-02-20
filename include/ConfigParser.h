@@ -16,15 +16,6 @@
 
 class ConfigParser {
 public:
-    struct Configuration {
-        std::string initFile;
-        std::string outDir;
-        double timeStep;
-        double timeEnd;
-        double dumpInterval;
-        double h; // smoothing lenght
-        double gamma; // adiabatic index
-    };
 
     ConfigParser(const std::string &file="config.json");
 

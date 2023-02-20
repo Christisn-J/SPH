@@ -5,6 +5,9 @@
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
+/// possible values 1 up to 3 for dimension of the simulations
+#define DIM 2
+
 /** define debug level to enable additional output:
  * 0: no debug additions
  * 1: additional checks
@@ -19,11 +22,15 @@
 **/
 #define BOUNDARIES 0
 
-/// possible values 1 up to 3 for dimension of the simulations
-#define DIM 2
+/** define debug level to enable additional output:
+ * 0: protforce
+**/
+#define NN_SEARCH 0
 
-/// define if timestep is adaptive
-#define ADAPTIVE_TIMESTEP false
+/** define debug level to enable additional output:
+ * 0: iostherm (soundspeed is constant)
+**/
+#define TYP 0
 
 /// define Courant-Friedrichs-Levy number, should be smaller than 1
 #define CFL .4

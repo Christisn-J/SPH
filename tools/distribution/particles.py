@@ -40,7 +40,7 @@ def main():
 
     N = args.particles
     
-    h5f = h5py.File("./out/N{}{}D.h5".format(N,DIM), "w")
+    h5f = h5py.File("./out/_kh_N{}_{}D.h5".format(N,DIM), "w")
     if args.regularGrid:
         print("Generating regular grid positions")
     else:

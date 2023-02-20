@@ -1,8 +1,8 @@
 ; h5 file containing the initial particle distribution
-initFile ./out/N1002D.h5
+initFile ./out/_kh_N10_2D.h5
 
 ; output directory for particle distribution h5 files
-outDir out
+outDir ./out/
 
 ; fixed time step
 timeStep 1.0

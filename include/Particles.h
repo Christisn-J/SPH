@@ -54,8 +54,10 @@ private:
     int *nnl; // nearest neighbor list
     int *noi; // number of interactionsdouble 
     
-    double (*kernel)(const double&, const double&){ &Kernel::cubicSpline };
-    double (*dKernel)(const double&, const double&){ &dKernel::cubicSpline };
+    double (*W)(const double&, const double&){ &Kernel::cubicSpline };
+    double (*dW)(const double&, const double&){ &dKernel::cubicSpline };
+
+    int getNNLidx(int i, int n);
 
     double distance(const int i, const int n);
 

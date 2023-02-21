@@ -60,6 +60,7 @@
         "optional": "cpp",
         "regex": "cpp",
         "typeindex": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "iterator": "cpp"
     }
 }

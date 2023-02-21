@@ -25,7 +25,7 @@ double Kernel::cubicSpline(const double &r, const double &h) {
     } else if (0.5 <= q && q <= 1.){
         return o*2.*pow(1.-q, 3.);
     } else {
-#if DEBUG_LVL == 2
+#if DEBUG_LVL == NOT_IN_USE
         Logger(DEBUG) << "Kernal set to 0.0";
 #endif
         return 0.;
@@ -52,8 +52,8 @@ double dKernel::cubicSpline(const double &r, const double &h) {
     } else if (0.5 <= q && q <= 1.){
         return o*2.*-pow(1.-q, 2.);
     } else {
-#if DEBUG_LVL == 2
-        Logger(DEBUG) << "Kernal set to 0.0";
+#if DEBUG_LVL == NOT_IN_UESED
+        Logger(DEBUG) << "dKernal set to 0.0";
 #endif
         return 0.;
     }

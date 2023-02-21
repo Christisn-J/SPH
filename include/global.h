@@ -8,6 +8,8 @@
 #include <parameter.h>
 #include <string>
 
+#define NOT_IN_UESED -1
+
 enum typeP {
     ISOTERM,
     ADIABATIC

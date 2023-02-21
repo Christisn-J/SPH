@@ -5,19 +5,26 @@
 #include "../include/Particles.h"
 
 // constructor ----------------------------------------------------------------------------------------------- 
-Particles::Particles(int nParticles, Configuration config) : N { nParticles }, MAX_INTERACTIONS{ config.maxInteractions }{
+Particles::Particles(int nParticles, Configuration config) : N { nParticles }{
+    // prevent stack overflow
+    if (config.maxInteractions < N){
+        MAX_INTERACTIONS = config.maxInteractions;
+    }else{
+        MAX_INTERACTIONS = N;
+    }
+    
     // allocate memory
-    m = new double[N];
-    u = new double[N];
+    m = new double[N];          // mass
+    u = new double[N];          // energy
 
-    rho = new double[N];
+    rho = new double[N];        // density
     rhoGrad = new double[N][DIM];
 
-    P = new double[N];
+    P = new double[N];          // pressure
     PGrad = new double[N][DIM];
 
-    x = new double[N];
-    vx = new double[N];
+    x = new double[N];          // possition
+    vx = new double[N];         // velossity
     vxDelta = new double[N];
     vxGrad = new double[N][DIM];
     
@@ -82,21 +89,36 @@ void Particles::compNN(const double &h){
         int interact = 0;
         
         for(int n=0; n<N; ++n){
+#if DEBUG_LVL == NOT_IN_USE    
+                if(distance(i,n) < h){
+                    Logger(DEBUG) << " i " << i  << " n " << n << " dis " << distance(i,n);
+                }
+#endif
+
             // cheack distance beetween particles
             if(distance(i,n) < h){
                 if (interact >= N) {
                     Logger(ERROR) << "Out of bounds: Number of particles";
                     exit(1);
-                    }
-                
-                nnl[i * N+interact] = n;
+                }
+                if (interact >= MAX_INTERACTIONS) {
+                    Logger(ERROR) << "To many interactions";
+                    exit(1);
+                }
+
+#if DEBUG_LVL == NOT_IN_USE       
+                Logger(DEBUG) << i  << " NN "<< n;
+#endif
+
+                nnl[i * MAX_INTERACTIONS+interact] = n;
                 ++ interact;
                 
             }
         }
         noi[i] = interact;
-        
-        Logger(DEBUG) << i  << " noi "<< noi[i];
+#if DEBUG_LVL == 2       
+        Logger(DEBUG) << i  << "\tnoi "<< noi[i];
+#endif
 #endif // PROTFORCE
     }
 
@@ -104,9 +126,25 @@ void Particles::compNN(const double &h){
 
 void Particles::compDensity(const double &h){
     for(int i=0; i<N; ++i){
-        rho[i] = m[i]*kernel(distance(i,nnl[i]),h);
+        rho[i] = 0; 
+#if DEBUG_LVL == NOT_IN_USE
+            Logger(DEBUG) << i << "\trho "<< rho[i];      
+#endif
+        for(int n=0; n<noi[i]; n++){
+            int j = nnl[getNNLidx(i,n)];
+#if DEBUG_LVL == NOT_IN_USE
+            Logger(DEBUG) << i << "\tNN "<< nnl[getNNLidx(i,n)] << " dis " << distance(i,nnl[getNNLidx(i,n)]);
+#endif            
+            rho[i] += m[j]*W(distance(i,j),h);
+
+#if DEBUG_LVL == NOT_IN_USE
+            Logger(DEBUG) << "\tn " << n <<  " m "<< m[j] << " W " << W(distance(i,j),h);
+            Logger(DEBUG) << i << "\tn " << n <<  " rho "<< rho[i];      
+#endif
+        }
+
 #if DEBUG_LVL == 2
-        Logger(DEBUG) << i << " rho "<< rho[i]; 
+            Logger(DEBUG) << i << "\trho "<< rho[i];      
 #endif
         if(rho[i] <= 0.){
             Logger(WARN) << "Zero or negative density @" << i;
@@ -187,18 +225,27 @@ double Particles::sumEnergy(){
 
 // -----------------------------------------------------------------------------------------------------------
 double Particles::distance(const int i, const int n){
+
     double sum = 0; 
 #if DIM >= 1
     sum += pow(x[i]-x[n],2);
 #endif // 1D
 
 #if DIM >= 2
+
+
     sum += pow(y[i]-y[n],2);
 #endif // 2D
 
 #if DIM == 3
     sum += pow(z[i]-z[n],2);
 #endif // 3D
+
+#if DEBUG_LVL == NOT_IN_USE
+    Logger(DEBUG) << i << " pos " << x[i] << " / " << y[i];
+    Logger(DEBUG) << " pos " << x[n] << " / " << y[n];
+    Logger(DEBUG) << " dis " << sqrt(sum);
+#endif
 
     return sqrt(sum);
 }
@@ -221,15 +268,19 @@ void Particles::gradient(double *f, double (*grad)[DIM]){
 
 void Particles::accelerate(const double &h){
     for(int i=0; i<N; ++i){
-        for(int n=0; n<nnl[i]; n++){
-            vxDelta[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
+        for(int n=0; n<noi[i]; n++){
+            int j = nnl[getNNLidx(i,n)];
+            double r = distance(i,nnl[j]);
+
+            // ... dW(r)/r * (x_i-x_n) with r := r_i-r_n
+            vxDelta[i] += -m[j]*(P[i]/pow(rho[i],2)-P[j]/pow(rho[j],2))*dW(r,h)/r* (x[i]-x[j]);
         
 #if DIM >= 2
-            vyDelta[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
+            vyDelta[i] += -m[j]*(P[i]/pow(rho[i],2)-P[j]/pow(rho[j],2))*dW(r,h)/r* (y[i]-y[j]);
 #endif // 2D
 
 #if DIM == 3
-            vzDelta[i] += -m[i]*(P[i]/pow(rho[i],2)-P[n]/pow(rho[n],2))*dKernel(distance(i,nnl[i]),h);
+            vzDelta[i] += -m[j]*(P[i]/pow(rho[i],2)-P[j]/pow(rho[j],2))*dKernel(r,h)/r* (z[i]-z[j]);
 #endif // 3D
         }
     }
@@ -250,20 +301,13 @@ void Particles::damping(const double &h){
 }
 
 void Particles::integrate(const double &dt){
-    // Eulerstep
-    // update velossity
+#if DEBUG_LVL == NOT_IN_UESED
     for(int i=0; i<N; ++i ){
-        vx[i] = vx[i] + dt * vxDelta[i];
-
-#if DIM >= 2
-        vy[i] = vy[i] + dt * vyDelta[i];
-#endif // 2D
-
-#if DIM == 3
-        vz[i] = vz[i] + dt * vzDelta[i];
-#endif // 3D
+        Logger(DEBUG) << i << " pos " << x[i] << " " << y[i] ;
+        Logger(DEBUG) << i << " v " << vx[i] << " " << vy[i];
     }
-    
+#endif
+    // Eulerstep
     // update possition
     for(int i=0; i<N; ++i ){
         x[i] = x[i]+ dt*vx[i];
@@ -277,6 +321,18 @@ void Particles::integrate(const double &dt){
 #endif // 3D
     }
 
+    // update velossity
+    for(int i=0; i<N; ++i ){
+        vx[i] = vx[i] + dt * vxDelta[i]; 
+
+#if DIM >= 2
+        vy[i] = vy[i] + dt * vyDelta[i];
+#endif // 2D
+
+#if DIM == 3
+        vz[i] = vz[i] + dt * vzDelta[i];
+#endif // 3D
+    }
 }
 
 void Particles::save(std::string filename, double simTime){
@@ -359,6 +415,10 @@ void Particles::save(std::string filename, double simTime){
 }
 
 // helper functions ------------------------------------------------------------------------------------------
+int Particles::getNNLidx(int i, int n){
+    return i*MAX_INTERACTIONS+n;
+}
+
 double Particles::sumMomentumX(){
     double momX = 0.;
     for (int i=0; i<N; ++i){

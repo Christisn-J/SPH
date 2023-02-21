@@ -26,7 +26,6 @@ def grid(center, length, N, flag =False):
                 else:
                     pos[i] = 2*length*np.random.random(2) + center-length
                 i += 1
-
     return pos, vel, mass
 
 def main(): 
@@ -40,7 +39,7 @@ def main():
 
     N = args.particles
     
-    h5f = h5py.File("./out/_kh_N{}_{}D.h5".format(N,DIM), "w")
+    h5f = h5py.File("./kh_N{}_{}D.h5".format(N,DIM), "w")
     if args.regularGrid:
         print("Generating regular grid positions")
     else:

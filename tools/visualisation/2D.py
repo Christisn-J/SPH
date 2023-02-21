@@ -9,13 +9,21 @@ import h5py
 def createPossitionPlot(h5File, outDir, flagGrad, flagVel, flagNN):
     data = h5py.File(h5File, 'r')
     pos = data["x"][:]
+    rho = data["rho"][()]
     data.close()
 
     fig, ax = plt.subplots()
-    ax.scatter(pos[:,0], pos[:,1], s=500.)
+    rhoPlt = ax.scatter(pos[:,0], pos[:,1], c=rho, s=100.)
+
+    ax.set_xlim((-5, 5))
+    ax.set_ylim((-5, 5))
+
+    fig.colorbar(rhoPlt, ax=ax)
+
     plt.xlabel("$x$")
     plt.ylabel("$y$")
     plt.tight_layout()
+    plt.grid()
     print("\tSaving figure to", outDir + "/" + pathlib.Path(h5File).stem + ".png")
     plt.savefig(outDir + "/" + pathlib.Path(h5File).stem + ".png")
     plt.close()

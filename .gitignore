@@ -34,5 +34,16 @@
 # Bash script
 *.sh
 
+# Executable folder
+bin/
+
+# Header only libraries
+holib/
+
+# Output files
+out/
+
+# Generated output files
 *.h5
-*.info
+*.png
+*.mp4

@@ -33,3 +33,6 @@
 
 # Bash script
 *.sh
+
+*.h5
+*.info

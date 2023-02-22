@@ -89,11 +89,18 @@ void Particles::compNN(const double &h){
         int interact = 0;
         
         for(int n=0; n<N; ++n){
-#if DEBUG_LVL == NOT_IN_USE    
+#if DEBUG_LVL == NOT_IN_USE  
                 if(distance(i,n) < h){
                     Logger(DEBUG) << " i " << i  << " n " << n << " dis " << distance(i,n);
                 }
 #endif
+
+            /*
+            if(i == n){
+                // not interact with each self
+                continue;
+            }
+            */
 
             // cheack distance beetween particles
             if(distance(i,n) < h){
@@ -116,7 +123,7 @@ void Particles::compNN(const double &h){
             }
         }
         noi[i] = interact;
-#if DEBUG_LVL == 2       
+#if DEBUG_LVL == DISABLED       
         Logger(DEBUG) << i  << "\tnoi "<< noi[i];
 #endif
 #endif // PROTFORCE
@@ -126,11 +133,12 @@ void Particles::compNN(const double &h){
 
 void Particles::compDensity(const double &h){
     for(int i=0; i<N; ++i){
+        // initialiase
         rho[i] = 0; 
 #if DEBUG_LVL == NOT_IN_USE
             Logger(DEBUG) << i << "\trho "<< rho[i];      
 #endif
-        for(int n=0; n<noi[i]; n++){
+        for(int n=0; n<noi[i]; ++n){
             int j = nnl[getNNLidx(i,n)];
 #if DEBUG_LVL == NOT_IN_USE
             Logger(DEBUG) << i << "\tNN "<< nnl[getNNLidx(i,n)] << " dis " << distance(i,nnl[getNNLidx(i,n)]);
@@ -143,7 +151,7 @@ void Particles::compDensity(const double &h){
 #endif
         }
 
-#if DEBUG_LVL == 2
+#if DEBUG_LVL == DISABLED
             Logger(DEBUG) << i << "\trho "<< rho[i];      
 #endif
         if(rho[i] <= 0.){
@@ -268,21 +276,55 @@ void Particles::gradient(double *f, double (*grad)[DIM]){
 
 void Particles::accelerate(const double &h){
     for(int i=0; i<N; ++i){
-        for(int n=0; n<noi[i]; n++){
-            int j = nnl[getNNLidx(i,n)];
-            double r = distance(i,nnl[j]);
+        // initialiase 
+        vxDelta[i] = 0;
 
-            // ... dW(r)/r * (x_i-x_n) with r := r_i-r_n
-            vxDelta[i] += -m[j]*(P[i]/pow(rho[i],2)-P[j]/pow(rho[j],2))*dW(r,h)/r* (x[i]-x[j]);
-        
 #if DIM >= 2
-            vyDelta[i] += -m[j]*(P[i]/pow(rho[i],2)-P[j]/pow(rho[j],2))*dW(r,h)/r* (y[i]-y[j]);
+        vyDelta[i] = 0;
 #endif // 2D
 
 #if DIM == 3
-            vzDelta[i] += -m[j]*(P[i]/pow(rho[i],2)-P[j]/pow(rho[j],2))*dKernel(r,h)/r* (z[i]-z[j]);
+        vzDelta[i] = 0;
+#endif // 3D
+
+#if DEBUG_LVL == DISABLED
+        Logger(DEBUG) << i << "\ta " << vxDelta[i] << " / " << vyDelta[i] ;      
+#endif
+        for(int n=0; n<noi[i]; ++n){
+            int j = nnl[getNNLidx(i,n)];
+            double r = distance(i,j);
+
+            if (r == 0 || i == j){
+                // no total share because of r := |r_i-r_n| multiplier
+#if DEBUG_LVL == NOT_IN_USE
+                Logger(WARN) <<  "Prefent \"Divide by Zero\"";
+                Logger(DEBUG) << "\ti " << i << "\tj" << j << "\t| dis " << distance(i,j);
+#endif
+                continue;
+            }
+
+            // ... dW(r)/r * (x_i-x_n) with r := r_i-r_n
+            vxDelta[i] += -m[j]*(P[i]/pow(rho[i],2)+P[j]/pow(rho[j],2))*dW(r,h)/r* (x[i]-x[j]);
+
+#if DEBUG_LVL == NOT_IN_USE
+            Logger(DEBUG) << "\tax\t"; // << (P[i]/pow(rho[i],2)+P[j]/pow(rho[j],2)) << "\t " << dW(r,h) << "\t " << r << "\t " << (x[j]-x[i]);
+            Logger(DEBUG) << "\t\t" << -m[j]*(P[i]/pow(rho[i],2)+P[j]/pow(rho[j],2))*dW(r,h)/r* (x[i]-x[j]);
+            Logger(DEBUG) << "\ta+\t" << vxDelta[i]; 
+#endif
+
+
+#if DIM >= 2
+            vyDelta[i] += -m[j]*(P[i]/pow(rho[i],2)+P[j]/pow(rho[j],2))*dW(r,h)/r* (y[i]-y[j]);
+#endif // 2D
+
+#if DIM == 3
+            vzDelta[i] += -m[j]*(P[i]/pow(rho[i],2)+P[j]/pow(rho[j],2))*dKernel(r,h)/r* (z[i]-z[j]);
 #endif // 3D
         }
+
+#if DEBUG_LVL == DISABLED
+        Logger(DEBUG) << i << "\ta " << vxDelta[i] << " / " << vyDelta[i] ;      
+#endif
     }
 }
 
@@ -301,28 +343,12 @@ void Particles::damping(const double &h){
 }
 
 void Particles::integrate(const double &dt){
-#if DEBUG_LVL == NOT_IN_UESED
-    for(int i=0; i<N; ++i ){
-        Logger(DEBUG) << i << " pos " << x[i] << " " << y[i] ;
-        Logger(DEBUG) << i << " v " << vx[i] << " " << vy[i];
-    }
-#endif
     // Eulerstep
-    // update possition
-    for(int i=0; i<N; ++i ){
-        x[i] = x[i]+ dt*vx[i];
-
-#if DIM >= 2
-        y[i] = y[i]+ dt*vy[i];
-#endif // 2D
-
-#if DIM == 3
-        z[i] = z[i]+ dt*vz[i];
-#endif // 3D
-    }
-
     // update velossity
     for(int i=0; i<N; ++i ){
+#if DEBUG_LVL == DISABLED
+        Logger(DEBUG) << i << "\tv_n\t" << vx[i] << " / " << vy[i];
+#endif
         vx[i] = vx[i] + dt * vxDelta[i]; 
 
 #if DIM >= 2
@@ -332,6 +358,32 @@ void Particles::integrate(const double &dt){
 #if DIM == 3
         vz[i] = vz[i] + dt * vzDelta[i];
 #endif // 3D
+
+#if DEBUG_LVL == DISABLED
+        Logger(DEBUG) << "\tv_n+1\t" << vx[i] << " / " << vy[i];
+#endif
+
+    }
+
+    // update possition
+    for(int i=0; i<N; ++i ){
+#if DEBUG_LVL == DISABLED
+        Logger(DEBUG) << i << "\tpos_n\t" << x[i] << " / " << y[i] ;
+#endif
+        x[i] = x[i]+ dt*vx[i];
+
+#if DIM >= 2
+        y[i] = y[i]+ dt*vy[i];
+#endif // 2D
+
+#if DIM == 3
+        z[i] = z[i]+ dt*vz[i];
+#endif // 3D
+
+#if DEBUG_LVL == DISABLED
+        Logger(DEBUG) << "\tpos_n+1\t" << x[i] << " / " << y[i] ;
+#endif
+
     }
 }
 

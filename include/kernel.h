@@ -10,11 +10,11 @@
 #include "lib.h"
 #include "Logger.h"
 
-namespace Kernel {
+namespace KernelR {
     double cubicSpline(const double &r, const double &h);
 }
 
-namespace dKernel {
+namespace NablaKernelR {
     double cubicSpline(const double &r, const double &h);
 }
 

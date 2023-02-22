@@ -4,7 +4,7 @@
 
 #include "../include/kernel.h"
 
-double Kernel::cubicSpline(const double &r, const double &h) {
+double KernelR::cubicSpline(const double &r, const double &h) {
 #if DIM == 1 //TODO 
     const double sigma = nan;
 #endif // 1D
@@ -32,7 +32,7 @@ double Kernel::cubicSpline(const double &r, const double &h) {
     }
 }
 
-double dKernel::cubicSpline(const double &r, const double &h) {
+double NablaKernelR::cubicSpline(const double &r, const double &h) {
 #if DIM == 1 //TODO 
     const double sigma = nan;
 #endif // 1D

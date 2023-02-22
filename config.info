@@ -1,7 +1,7 @@
-; /
-;
-;
-:
+;   || // 
+;   ||//   
+;   ||\\   |
+:   || \\  
 
 ; h5 file containing the initial particle distribution
 initFile ./kh_N9_2D.h5
@@ -10,10 +10,10 @@ initFile ./kh_N9_2D.h5
 outDir ./out/
 
 ; fixed time step
-timeStep 0.00005
+timeStep 0.05
 
 ; end of the simulation
-timeEnd 1
+timeEnd 2.5
 
 ; output particle distribution each h5DumpInterval steps
 storeFrequency 5

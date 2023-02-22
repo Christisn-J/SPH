@@ -10,7 +10,7 @@ void algorithm(Configuration config, Particles particles){
     int step = 0;
 
     do {
-        Logger(INFO) << "  > TIME: " << t << ", STEP: " << step;
+        Logger(INFO) << "  > TIME: " << t << ", STEP: " << step << " --------------------------------------------------------------";
 
 // determine -------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Nearest neighbor search";
@@ -57,7 +57,6 @@ void algorithm(Configuration config, Particles particles){
         particles.gradient(particles.P, particles.PGrad);
 
 // save dataset ----------------------------------------------------------------------------------------------
-      // TODO:
       if (step % config.storeFrequency == 0) {
             std::stringstream stepss;
             Logger(INFO) << "   > Dump particle distribution";

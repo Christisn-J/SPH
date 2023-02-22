@@ -9,6 +9,7 @@
 #include <string>
 
 #define NOT_IN_UESED -1
+#define DISABLED -1
 
 enum typeP {
     ISOTERM,

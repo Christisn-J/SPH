@@ -24,3 +24,8 @@ Stage 3: DIMENSIONS (---)
 Stage 4: TESTCASES (--)
 - kevin-helmholtz
 - sedov
+
+Stage 00: Futerwork (---)
+::Boundary::
+- conditions (sticy)            TODO
+- conditions (reflectiv)        

@@ -4,6 +4,6 @@
 
 #include "../include/Boundary.h"
 
-Domain::Domain(Frame bounds){}
+Domain::Domain(Frame bounds): bounds { bounds }{}
 
 Domain::~Domain(){}

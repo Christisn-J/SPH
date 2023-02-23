@@ -12,6 +12,9 @@ outDir ./out/
 ; fixed time step
 timeStep 0.05
 
+; start of the simulation
+timeStart 0.0
+
 ; end of the simulation
 timeEnd 2.5
 
@@ -28,8 +31,7 @@ h 2
 gamma 1.6666666666666667
 
 ; periodic boundaries of box
-; ignored when PERIODIC_BOUNDARIES is not set in parameter.h
-periodicBoxLimits {
+boxLimits {
     lowerX -.5
     lowerY -.5
     lowerZ 0.

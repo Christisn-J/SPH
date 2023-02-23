@@ -81,6 +81,55 @@ Particles::~Particles() {
 }
 
 // functions -------------------------------------------------------------------------------------------------
+#if BOUNDARIES != PERIODIC
+void Particles::getDomainLimits(double *domainLimits){
+
+    double minX { std::numeric_limits<double>::max() };
+    double maxX { std::numeric_limits<double>::min() };
+#if DIM >= 2
+    double minY { std::numeric_limits<double>::max() };
+    double maxY { std::numeric_limits<double>::min() };
+#endif // 2D
+#if DIM == 3
+    double minZ { std::numeric_limits<double>::max() };
+    double maxZ { std::numeric_limits<double>::min() };
+#endif // 3D
+
+    for(int i=0; i<N; ++i){
+        if (x[i] < minX){
+            minX = x[i];
+        } else if (x[i] > maxX){
+            maxX = x[i];
+        }
+#if DIM >= 2
+        if (y[i] < minY){
+            minY = y[i];
+        } else if (y[i] > maxY){
+            maxY = y[i];
+        }
+#endif // 2D
+#if DIM == 3
+        if (z[i] < minZ){
+            minZ = z[i];
+        } else if (z[i] > maxZ){
+            maxZ = z[i];
+        }
+#endif // 3D
+    }
+
+    domainLimits[0] = minX;
+    domainLimits[DIM] = maxX;
+#if DIM >= 2
+    domainLimits[1] = minY;
+    domainLimits[DIM+1] = maxY;
+#endif // 2D
+#if DIM == 3
+    domainLimits[2] = minZ;
+    domainLimits[DIM+2] = maxZ;
+#endif // 3D
+}
+#endif
+
 void Particles::compNN(const double &h){
     // loop over particles
     for(int i=0; i<N; ++i){
@@ -330,19 +379,24 @@ void Particles::accelerate(const double &h){
 
 void Particles::damping(const double &h){
     for(int i=0; i<N; ++i){
-        vxDelta[i] = vxDelta[i];
+
+
+#if TESTCASE == -1
+        vxDelta[i] += -vxDelta[i];
 
 #if DIM >= 2
-        vyDelta[i] = vyDelta[i];
+        vyDelta[i] += -vyDelta[i];
 #endif // 2D
 
 #if DIM == 3
-        vzDelta[i] = vzDelta[i];
+        vzDelta[i] += -vzDelta[i];
 #endif // 3D
     }
+#endif
+
 }
 
-void Particles::integrate(const double &dt){
+void Particles::integrate(const double &dt, const Domain &domain){
     // Eulerstep
     // update velossity
     for(int i=0; i<N; ++i ){
@@ -370,6 +424,7 @@ void Particles::integrate(const double &dt){
 #if DEBUG_LVL == DISABLED
         Logger(DEBUG) << i << "\tpos_n\t" << x[i] << " / " << y[i] ;
 #endif
+
         x[i] = x[i]+ dt*vx[i];
 
 #if DIM >= 2
@@ -383,6 +438,30 @@ void Particles::integrate(const double &dt){
 #if DEBUG_LVL == DISABLED
         Logger(DEBUG) << "\tpos_n+1\t" << x[i] << " / " << y[i] ;
 #endif
+
+#if BOUNDARIES == PERIODIC
+        if (x[i] < domain.bounds.minX) {
+            x[i] = domain.bounds.maxX - (domain.bounds.minX - x[i]);
+        } else if (domain.bounds.maxX <= x[i]) {
+            x[i] = domain.bounds.minX + (x[i] - domain.bounds.maxX);
+        }
+#if DIM >= 2
+        if (y[i] < domain.bounds.minY) {
+            y[i] = domain.bounds.maxY - (domain.bounds.minY - y[i]);
+        } else if (domain.bounds.maxY <= y[i]) {
+            y[i] = domain.bounds.minY + (y[i] - domain.bounds.maxY);
+        }
+#endif // 2D
+
+#if DIM ==3
+        if (z[i] < domain.bounds.minZ) {
+            z[i] = domain.bounds.maxZ - (domain.bounds.minZ - z[i]);
+        } else if (domain.bounds.maxZ <= z[i]) {
+            z[i] = domain.bounds.minZ + (z[i] - domain.bounds.maxZ);
+        }
+#endif // 3D
+
+#endif // PERIODIC
 
     }
 }

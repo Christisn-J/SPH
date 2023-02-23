@@ -8,11 +8,8 @@
 #include "parameter.h"
 #include "Logger.h"
 
-enum typebound {
-    TRANSPARENT,
-    PERIODIC,
-    REFLECTIV
-};
+#define PERIODIC 1
+#define REFLECTIV 2
 
 class Domain {
 
@@ -43,6 +40,8 @@ public:
 
     Domain(Frame bounds);
     ~Domain();
+
+    Frame bounds;
 };
 
 #endif // BOUNDARY_H

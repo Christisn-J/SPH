@@ -14,12 +14,14 @@
 #include "../include/Logger.h"
 #include "../include/H5.h"
 
+// by Christian Jetter
 #include "../include/global.h"
 #include "../include/Particles.h"
-#include "../include/kernel.h"
 #include "../include/Boundary.h"
-#include "../include/lib.h"
+#include "../include/kernel.h"
 #include "../include/tools.h"
+
+#include "../include/lib.h"
 
 // instantiation Logger
 structlog LOGCFG = {};
@@ -68,6 +70,8 @@ int main(int argc, char *argv[]){
     Logger(INFO) << "    > Output directory: " << config.outDir;
     config.timeStep = read.getVal<double>("timeStep");
     Logger(INFO) << "    > Time step: " << config.timeStep;
+    config.timeEnd = read.getVal<double>("timeStart");
+    Logger(INFO) << "    > Start of simulation: " << config.timeStart;
     config.timeEnd = read.getVal<double>("timeEnd");
     Logger(INFO) << "    > End of simulation: " << config.timeEnd;
     config.storeFrequency = read.getVal<int>("storeFrequency");
@@ -78,6 +82,31 @@ int main(int argc, char *argv[]){
     Logger(INFO) << "    > Using global kernel size h = " << config.h;
     config.gamma = read.getVal<double>("gamma");
     Logger(INFO) << "    > Adiabatic index for ideal gas EOS gamma = " << config.gamma;
+
+#if BOUNDARIES == PERIODIC
+    auto boxLimits = read.getObj("boxLimits");
+    config.boxLimits[0] = boxLimits.getVal<double>("lowerX");
+    config.boxLimits[DIM] = boxLimits.getVal<double>("upperX");
+
+#if DIM >= 2
+    config.boxLimits[1] = boxLimits.getVal<double>("lowerY");
+    config.boxLimits[DIM+1] = boxLimits.getVal<double>("upperY");
+#endif // 2D
+
+#if DIM == 3
+    config.boxLimits[2] = boxLimits.getVal<double>("lowerZ");
+    config.boxLimits[DIM+2] = boxLimits.getVal<double>("upperZ");
+#endif // 3D
+
+    // TODO: lib/str <double>array2str(<double> arr[]]) 
+    std::string ArrayStr = "[";
+    for (int i=0; i<2*DIM; i++){
+        ArrayStr.append(std::to_string(config.boxLimits[i]));
+        if(i<2*DIM-1) ArrayStr.append(", ");
+    }
+    Logger(INFO) << "    > Periodic boundaries within box: " << ArrayStr << "]";
+
+#endif // PERIODIC
 
 // initialize -------------------------------------------------------------------------------------------------
     H5 distribuition;
@@ -90,11 +119,20 @@ int main(int argc, char *argv[]){
     distribuition.initialize(sampel);
 
     Logger(INFO) << "    > N = " << sampel.N;
+
+#if BOUNDARIES == PERIODIC
+    double *domainLimits = config.boxLimits;
+#else // PERIODIC
+    double domainLimits[DIM*2];
+    particles.getDomainLimits(domainLimits);
+#endif
+    Domain::Frame boundingBox { domainLimits };
+
     Logger(INFO) << "... done.";
 
 // simulation ------------------------------------------------------------------------------------------------
     Logger(INFO) << "Starting simulation ...";
-    algorithm(config, sampel);
+    algorithm(config, sampel, boundingBox);
     Logger(INFO) << "... done.";    
         
     return 0;

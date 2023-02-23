@@ -1,24 +1,26 @@
-# SPH 
-Stage 0: SETUP
+# SPH (11.01.23)
+Stage 0: SETUP (13.02.23)
 - tools (GitHub, HDF5)          DONE
 - frame (structure)             DONE
 - build (compile & link)        DONE
 
-Stage 1: IMPLEMENT
+Stage 1: IMPLEMENT (22.02.23)
 - calculate density (Kernal)    DONE
 - acceloration (Delta p)        DONE
 - intregration (Euler)          DONE
-- debug                         DONE
+- debug (testcase)              DONE
 
-Stage 2: DOMAIN
+Stage 2: DOMAIN (---)
 - boundaries                    TODO
 - conditions (periodic)         TODO
 - virtual particles             TODO
 
-Stage 3: DIMENSIONS
-- upscale to 3D                 
-- debug
+- kevin-helmholtz
 
-Stage 4: TESTCASES
+Stage 3: DIMENSIONS (---)
+- expand to 3D                 
+- debug (testcase)
+
+Stage 4: TESTCASES (--)
 - kevin-helmholtz
 - sedov

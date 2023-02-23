@@ -4,8 +4,8 @@
 
 #include "../include/tools.h"
 
-void algorithm(Configuration config, Particles particles){
-    double t = 0;
+void algorithm(Configuration config, Particles particles, Domain::Frame bounds){
+    double t = config.timeStart;
     double timeStep;
     int step = 0;
 
@@ -78,7 +78,8 @@ void algorithm(Configuration config, Particles particles){
 
 // update ----------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Updating state";
-        particles.integrate(timeStep);
+        Domain  domain(bounds);
+        particles.integrate(timeStep, domain);
 
         t += timeStep;
         ++step;

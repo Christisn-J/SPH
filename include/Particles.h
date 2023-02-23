@@ -8,10 +8,13 @@
 #include <cmath>
 #include <highfive/H5File.hpp>
 
-#include "Logger.h"
 #include "global.h"
+#include "Logger.h"
 #include "kernel.h"
 
+enum typeNN {
+    PROTFORCE,
+};
 
 class Particles {
 public:
@@ -44,8 +47,9 @@ public:
     void accelerate(const double &h);
     void damping(const double &h);
 
-    void integrate(const double &t);
+    void integrate(const double &t, const Domain &domain);
 
+    void getDomainLimits(double *domainLimits);
     void save(std::string filename, double simTime);
 
 private:

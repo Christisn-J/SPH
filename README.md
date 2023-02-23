@@ -28,7 +28,10 @@
 
 **Boundary**
 - conditions (sticy)            
-- conditions (reflectiv)   
+- conditions (reflectiv)
+
+**extend Physic**
+- Not Isoterm --> not constant time Step, chanching Energy 'u'
 
 **TESTCASES**
 - sedov

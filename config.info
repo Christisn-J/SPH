@@ -4,7 +4,7 @@
 :   || \\  
 
 ; h5 file containing the initial particle distribution
-initFile ./kh_N9_2D.h5
+initFile ./testcaseStage2_N9_2D.h5
 
 ; output directory for particle distribution h5 files
 outDir ./out/
@@ -16,7 +16,7 @@ timeStep 0.05
 timeStart 0.0
 
 ; end of the simulation
-timeEnd 2.5
+timeEnd 10
 
 ; output particle distribution each h5DumpInterval steps
 storeFrequency 5
@@ -32,10 +32,10 @@ gamma 1.6666666666666667
 
 ; periodic boundaries of box
 boxLimits {
-    lowerX -.5
-    lowerY -.5
-    lowerZ 0.
-    upperX .5
-    upperY .5
-    upperZ 0.
+    lowerX -5.
+    lowerY -5.
+    lowerZ -nan
+    upperX 5
+    upperY 5
+    upperZ -nan
 }

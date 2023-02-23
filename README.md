@@ -12,7 +12,7 @@ Stage 1: IMPLEMENT (22.02.23)
 
 Stage 2: DOMAIN (---)
 - boundaries                    DONE
-- conditions (periodic)         TODO
+- conditions (periodic)         DONE
 - virtual particles             TODO
 
 - kevin-helmholtz

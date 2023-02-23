@@ -6,6 +6,7 @@
 #define PARTICLES_H
 
 #include <cmath>
+#include <limits>
 #include <highfive/H5File.hpp>
 
 #include "global.h"

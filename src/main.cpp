@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
     double *domainLimits = config.boxLimits;
 #else // PERIODIC
     double domainLimits[DIM*2];
-    particles.getDomainLimits(domainLimits);
+    sampel.getDomainLimits(domainLimits);
 #endif
     Domain::Frame boundingBox { domainLimits };
 

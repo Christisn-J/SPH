@@ -28,7 +28,7 @@
  * 1: periodic
  * 2: reflectiv
 **/
-#define BOUNDARIES 1
+#define BOUNDARIES 0
 
 /** define debug level to enable additional output:
  * 0: protforce

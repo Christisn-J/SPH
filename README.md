@@ -11,7 +11,7 @@ Stage 1: IMPLEMENT (22.02.23)
 - debug (testcase)              DONE
 
 Stage 2: DOMAIN (---)
-- boundaries                    TODO
+- boundaries                    DONE
 - conditions (periodic)         TODO
 - virtual particles             TODO
 

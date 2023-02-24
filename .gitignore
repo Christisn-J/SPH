@@ -47,3 +47,6 @@ out/
 *.h5
 *.png
 *.mp4
+
+# Visual Studio Code
+.vscode/

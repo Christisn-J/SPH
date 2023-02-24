@@ -5,21 +5,9 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include <parameter.h>
-#include <Boundary.h>
 #include <string>
-
-// TODO: remove Debuging test:
-#define NOT_IN_UESED -1
-#define DISABLED -1
-//
-
-enum typeP {
-    ISOTERM,
-    ADIABATIC
-};
-
-
+#include <namespace.h>
+#include <parameter.h>
 struct Configuration {
     std::string initFile;
     std::string outDir;
@@ -31,10 +19,9 @@ struct Configuration {
     double h; // smoothing lenght
     double gamma; // adiabatic index
 
-#if BOUNDARIES == PERIODIC
+#if BOUNDARIES != TRANSPARENT
     double boxLimits[2 * DIM];
-#endif // PERIODIC
-
+#endif // NOT TRANSPARENT 
 
 };
 

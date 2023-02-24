@@ -11,17 +11,15 @@
 
 // by Johannes Martin
 #include "../include/ConfigParser.h"
+#include "../include/Domain.h"
 #include "../include/Logger.h"
 #include "../include/H5.h"
 
 // by Christian Jetter
 #include "../include/global.h"
 #include "../include/Particles.h"
-#include "../include/Boundary.h"
 #include "../include/kernel.h"
 #include "../include/tools.h"
-
-#include "../include/lib.h"
 
 // instantiation Logger
 structlog LOGCFG = {};
@@ -83,7 +81,7 @@ int main(int argc, char *argv[]){
     config.gamma = read.getVal<double>("gamma");
     Logger(INFO) << "    > Adiabatic index for ideal gas EOS gamma = " << config.gamma;
 
-#if BOUNDARIES == PERIODIC
+#if BOUNDARIES != TRANSPARENT
     auto boxLimits = read.getObj("boxLimits");
     config.boxLimits[0] = boxLimits.getVal<double>("lowerX");
     config.boxLimits[DIM] = boxLimits.getVal<double>("upperX");
@@ -92,13 +90,12 @@ int main(int argc, char *argv[]){
     config.boxLimits[1] = boxLimits.getVal<double>("lowerY");
     config.boxLimits[DIM+1] = boxLimits.getVal<double>("upperY");
 #endif // 2D
-
 #if DIM == 3
     config.boxLimits[2] = boxLimits.getVal<double>("lowerZ");
     config.boxLimits[DIM+2] = boxLimits.getVal<double>("upperZ");
 #endif // 3D
 
-    // TODO: lib/str <double>array2str(<double> arr[]]) 
+    /// TODO: lib/str <double>array2str(<double> arr[]]) 
     std::string ArrayStr = "[";
     for (int i=0; i<2*DIM; i++){
         ArrayStr.append(std::to_string(config.boxLimits[i]));
@@ -106,7 +103,7 @@ int main(int argc, char *argv[]){
     }
     Logger(INFO) << "    > Periodic boundaries within box: " << ArrayStr << "]";
 
-#endif // PERIODIC
+#endif // NOT TRANSPARENT
 
 // initialize -------------------------------------------------------------------------------------------------
     H5 distribuition;
@@ -120,13 +117,13 @@ int main(int argc, char *argv[]){
 
     Logger(INFO) << "    > N = " << sampel.N;
 
-#if BOUNDARIES == PERIODIC
+#if BOUNDARIES != TRANSPARENT
     double *domainLimits = config.boxLimits;
-#else // PERIODIC
+#else // NOT TRANSPARENT
     double domainLimits[DIM*2];
     sampel.getDomainLimits(domainLimits);
-#endif
-    Domain::Frame boundingBox { domainLimits };
+#endif // TRANSPARENT
+    Domain::Cell boundingBox { domainLimits };
 
     Logger(INFO) << "... done.";
 

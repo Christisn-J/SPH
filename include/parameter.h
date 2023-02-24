@@ -16,16 +16,15 @@
 #define DEBUG_LVL 2
 
 /** define debug level to enable additional output:
- * 0: fluid in vacum
- * 1: fluid with viscosity (toystar)
+ * 1: fluid in vacum
  * 2: kevin-helmholtz
  * 3: sedov
 **/
-#define TESTCASE -1
+#define TESTCASE 0
 
 /** define kind of boundaries should be employed:
  * 0: transparent 
- * 1: periodic
+ * 1: periodi
  * 2: reflectiv
 **/
 #define BOUNDARIES 1
@@ -33,7 +32,7 @@
 /** define debug level to enable additional output:
  * 0: protforce
 **/
-#define NN_SEARCH 0
+#define NNS 1
 
 /** define debug level to enable additional output:
  * 0: iostherm (soundspeed is constant)

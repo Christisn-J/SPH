@@ -2,8 +2,8 @@
 // Created by Johannes Martin on 27.09.21.
 //
 
-#ifndef MESHLESSHYDRO_LOGGER_H
-#define MESHLESSHYDRO_LOGGER_H
+#ifndef LOGGER_H
+#define LOGGER_H
 
 #include <iostream>
 #include <string>
@@ -33,8 +33,7 @@ namespace Color {
         BG_BLUE = 44,
         BG_DEFAULT = 49
     };
-
-    class Modifier {
+class Modifier {
     public:
         Code code;
         Modifier(Code pCode);
@@ -80,4 +79,4 @@ private:
 };
 
 
-#endif //MESHLESSHYDRO_LOGGER_H
+#endif //LOGGER_H

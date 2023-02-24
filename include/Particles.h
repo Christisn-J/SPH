@@ -12,10 +12,7 @@
 #include "global.h"
 #include "Logger.h"
 #include "kernel.h"
-
-enum typeNN {
-    PROTFORCE,
-};
+#include "Domain.h"
 
 class Particles {
 public:
@@ -23,20 +20,23 @@ public:
     ~Particles();
         
     int N, MAX_INTERACTIONS;
-    double *m, *u, *x, *vx, *vxDelta, *rho, *P;
-    double (*rhoGrad)[DIM], (*vxGrad)[DIM], (*PGrad)[DIM];
+    int *cell; // cell in which particle at index resides
+    double *m, *u, *rho, *P;
+    double (*rhoGrad)[DIM], (*PGrad)[DIM];
 
+    double *x, *vx, *vxDelta;
+    double (*vxGrad)[DIM];
 #if DIM >= 2
     double *y, *vy, *vyDelta;
     double (*vyGrad)[DIM];
 #endif // 2D
-
 #if DIM == 3
     double *z, *vz, *vzDelta;
     double (*vzGrad)[DIM];
 #endif // 3D
 
-    void compNN(const double &h);
+    void assignParticlesAndCells(Domain &domain);
+    void compNN(Domain &domain, const double &h);
     void compDensity(const double &h);
     void compPressure(const double &gamma);
     void gradient(double *f, double (*grad)[DIM]);

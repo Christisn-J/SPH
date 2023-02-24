@@ -42,15 +42,14 @@ void H5::initialize(Particles &particles){
         particles.x[pCounter] = (*xit)[0];
         particles.vx[pCounter] = (*vit)[0];
 
-        #if DIM >= 2
+#if DIM >= 2
             particles.y[pCounter] = (*xit)[1];
             particles.vy[pCounter] = (*vit)[1];
-        #endif //2D
-
-        #if DIM == 3
+#endif //2D
+#if DIM == 3
                 particles.z[pCounter] = (*xit)[2];
                 particles.vz[pCounter] = (*vit)[2];
-        #endif //3D
+#endif //3D
 
         ++xit;
         ++uit;
@@ -61,5 +60,5 @@ void H5::initialize(Particles &particles){
 }
 
 void H5::save(const std::string &filename, Particles &particles){
-    // TODO:
+    
 }

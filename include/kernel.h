@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include "global.h"
-#include "lib.h"
 #include "Logger.h"
 
 namespace KernelR {

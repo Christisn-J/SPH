@@ -22,7 +22,6 @@ struct Configuration {
 #if BOUNDARIES != TRANSPARENT
     double boxLimits[2 * DIM];
 #endif // NOT TRANSPARENT 
-
 };
 
 #endif // GLOBAL_H

@@ -5,7 +5,7 @@
 #include "../include/Particles.h"
 
 // constructor ----------------------------------------------------------------------------------------------- 
-Particles::Particles(int nParticles, Configuration config) : N { nParticles }{
+Particles::Particles(int nParticles, Configuration config, bool ghosts) : N { nParticles }, ghosts {ghosts}{
     // prevent stack overflow
     if (config.maxInteractions < N){
         MAX_INTERACTIONS = config.maxInteractions;
@@ -173,7 +173,7 @@ void Particles::damping(const double &h){
     }
 }
 
-void Particles::integrate(const double &dt, const Domain &domain){
+void Particles::integrate(const double &dt){
     // Eulerstep
     // update velossity
     for(int i=0; i<N; ++i ){
@@ -213,7 +213,13 @@ void Particles::integrate(const double &dt, const Domain &domain){
         Logger(DEBUG) << "\tpos_n+1\t" << x[i] << " / " << y[i] ;
 #endif // TESTCASE
 
+    }
+}
+
+void Particles::boundary(const Domain &domain){
+
 #if BOUNDARIES == PERIODIC
+for(int i=0; i<N; ++i ){
         if (x[i] < domain.bounds.minX) {
             x[i] = domain.bounds.maxX - (domain.bounds.minX - x[i]);
         } else if (domain.bounds.maxX <= x[i]) {
@@ -233,9 +239,8 @@ void Particles::integrate(const double &dt, const Domain &domain){
             z[i] = domain.bounds.minZ + (z[i] - domain.bounds.maxZ);
         }
 #endif // 3D
-#endif // PERIODIC
-
     }
+#endif // PERIODIC
 }
 
 void Particles::save(std::string filename, double simTime){

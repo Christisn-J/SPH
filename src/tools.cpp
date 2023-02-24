@@ -103,9 +103,10 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         Logger(INFO) << "    > Calculate acceleration";
         particles.accelerate(config.h);
         particles.damping(config.h);
+        
 #if BOUNDARIES != TRANSPARENT
 // boundary--- ----------------------------------------------------------------------------------------------- 
-
+        particles.boundary(domain);
 #endif
 
 // update ----------------------------------------------------------------------------------------------------

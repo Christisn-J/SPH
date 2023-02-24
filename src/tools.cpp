@@ -79,7 +79,10 @@ void algorithm(Configuration config, Particles particles, Domain::Frame bounds){
 // update ----------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Updating state";
         Domain  domain(bounds);
-        particles.integrate(timeStep, domain);
+        particles.integrate(timeStep);
+#if BOUNDARIES > 0
+        particles.checkBoundary(domain);
+#endif
 
         t += timeStep;
         ++step;

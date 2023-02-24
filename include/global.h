@@ -9,10 +9,9 @@
 #include <Boundary.h>
 #include <string>
 
-// TODO: remove Debuging test:
+/// TODO: remove Debuging test:
 #define NOT_IN_UESED -1
 #define DISABLED -1
-//
 
 enum typeP {
     ISOTERM,
@@ -34,8 +33,6 @@ struct Configuration {
 #if BOUNDARIES == PERIODIC
     double boxLimits[2 * DIM];
 #endif // PERIODIC
-
-
 };
 
 #endif // GLOBAL_H

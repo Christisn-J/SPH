@@ -98,7 +98,7 @@ int main(int argc, char *argv[]){
     config.boxLimits[DIM+2] = boxLimits.getVal<double>("upperZ");
 #endif // 3D
 
-    // TODO: lib/str <double>array2str(<double> arr[]]) 
+    /// TODO: lib/str <double>array2str(<double> arr[]]) 
     std::string ArrayStr = "[";
     for (int i=0; i<2*DIM; i++){
         ArrayStr.append(std::to_string(config.boxLimits[i]));

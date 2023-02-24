@@ -19,7 +19,7 @@ enum typeNN {
 
 class Particles {
 public:
-    Particles(int numParticles, Configuration config);
+    Particles(int numParticles, Configuration config,  bool ghosts = false);
     ~Particles();
         
     int N, MAX_INTERACTIONS;
@@ -48,9 +48,10 @@ public:
     void accelerate(const double &h);
     void damping(const double &h);
 
-    void integrate(const double &t, const Domain &domain);
+    void integrate(const double &t);
 
     void getDomainLimits(double *domainLimits);
+    void checkBoundary(const Domain &domain);
     void save(std::string filename, double simTime);
 
 private:

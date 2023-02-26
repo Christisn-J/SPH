@@ -78,9 +78,9 @@ Particles::~Particles() {
 
     delete[] nnl;
     delete[] noi;
-    delete[] cell;
-
+    
 #if BOUNDARIES != TRANSPARENT
+    delete[] cell;
 #endif
 }
 
@@ -502,7 +502,6 @@ void Particles::compDensity(const double &h){
 
         for(int n=0; n<noi[i]; ++n){
             int j = nnl[getNNLidx(i,n)];
-
             rho[i] += m[j]*W(distance(i,j),h);
         }
 

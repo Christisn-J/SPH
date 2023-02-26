@@ -9,6 +9,11 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
     double timeStep;
     int step = 0;
 
+#if BOUNDARIES != TRANSPARENT
+        /// TODO: memory optimization
+        Particles ghosts = Particles(DIM*particles.N, config, true); 
+#endif // NOT TRANSPARENT
+
 // fixed grid ------------------------------------------------------------------------------------------------
     // instantiation grid
     Domain  domain(bounds);
@@ -40,6 +45,16 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         Logger(INFO) << "    > ... done.";
 #endif // NNS GRID
 
+
+#if BOUNDARIES != TRANSPARENT
+// ghost particles -------------------------------------------------------------------------------------------------
+        Logger(INFO) << "    > Creating ghost particles ...";
+        Logger(DEBUG) << "      > Creating ghost particles ... ";
+        particles.createGhostParticles(domain, ghosts, config.kernelSize);
+        Logger(DEBUG) << "      > ... found " << ghosts.N << " ghosts";
+        Logger(INFO) << "    > ... done.";
+#endif // NOT TRANSPARENT
+
 // determine -------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Nearest neighbor search";
         particles.compNN(domain, config.h);
@@ -49,6 +64,14 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 
         Logger(INFO) << "    > Computing pressure";
         particles.compPressure(config.gamma);
+
+#if BOUNDARIES != TRANSPARENT
+// ghost particles -------------------------------------------------------------------------------------------------
+        Logger(DEBUG) << "      > Ghosts NNS";
+        particles.ghostNNS(domain, ghosts, config.kernelSize);
+        
+        particles.compDensity(ghosts, config.kernelSize);
+#endif // NOT TRANSPARENT
 
 // conservation quantities ----------------------------------------------------------------------------------
         Logger(DEBUG) << "      SANITY CHECK > M_tot = " << particles.sumMass();
@@ -72,6 +95,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         timeStep = config.timeStep;
 #endif
 
+#ifndef DISABLED
 // gradient---------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Computing gradients";
         particles.gradient(particles.rho, particles.rhoGrad);
@@ -83,6 +107,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         particles->gradient(particles->vz, particles->vzGrad);
 #endif // 3D
         particles.gradient(particles.P, particles.PGrad);
+#endif // DISABLED
 
 // save dataset ----------------------------------------------------------------------------------------------
       if (step % config.storeFrequency == 0) {

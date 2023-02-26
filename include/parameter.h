@@ -16,12 +16,8 @@
 #define DEBUG_LVL 2
 
 /** define debug level to enable additional output:
-<<<<<<< HEAD
- * 1: fluid in vacum
-=======
  * 0: fluid in vacum
  * 1: TODO: fluid with viscosity (toystar)    
->>>>>>> 8fb93e9614a3af6b49b8ffa2fd130fb67c347e2c
  * 2: kevin-helmholtz
  * 3: TODO: sedov
 **/
@@ -29,13 +25,8 @@
 
 /** define kind of boundaries should be employed:
  * 0: transparent 
-<<<<<<< HEAD
- * 1: periodi
- * 2: reflectiv
-=======
  * 1: periodic
  * 2: TODO: reflectiv
->>>>>>> 8fb93e9614a3af6b49b8ffa2fd130fb67c347e2c
 **/
 #define BOUNDARIES 1
 

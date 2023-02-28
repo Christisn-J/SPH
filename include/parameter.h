@@ -13,7 +13,7 @@
  * 1: additional checks
  * 2: dump NNL and ghosts to files
 **/
-#define DEBUG_LVL 2
+#define DEBUG_LVL 1
 
 /** define debug level to enable additional output:
  * 0: fluid in vacum
@@ -34,7 +34,7 @@
  * 0: protforce
  * 1: TODO: ---
 **/
-#define NNS 1
+#define NNS 0
 
 /** define debug level to enable additional output:
  * 0: iostherm (soundspeed is constant)

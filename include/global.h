@@ -8,6 +8,11 @@
 #include <string>
 #include <namespace.h>
 #include <parameter.h>
+
+#define DISABLE -1
+
+#define MAX_GHOSTS_PER_PARTICLE 2*DIM-1
+
 struct Configuration {
     std::string initFile;
     std::string outDir;
@@ -20,6 +25,7 @@ struct Configuration {
     double gamma; // adiabatic index
 
 #if BOUNDARIES != TRANSPARENT
+    int maxGhostInteractions;
     double boxLimits[2 * DIM];
 #endif // NOT TRANSPARENT 
 };

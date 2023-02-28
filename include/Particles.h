@@ -16,11 +16,14 @@
 
 class Particles {
 public:
+// constructor ----------------------------------------------------------------------------------------------- 
     Particles(int numParticles, Configuration config,  bool ghosts = false);
+    
+// deconstructor --------------------------------------------------------------------------------------------- 
     ~Particles();
-        
+
+// object variablen ---------------------------------------------------------------------------------------------  
     int N, MAX_INTERACTIONS;
-    int *cell; // cell in which particle at index resides
     double *m, *u, *rho, *P;
     double (*rhoGrad)[DIM], (*PGrad)[DIM];
 
@@ -35,37 +38,78 @@ public:
     double (*vzGrad)[DIM];
 #endif // 3D
 
+#if NNS == GRID
+    int *cell; // cell in which particle at index resides
+#endif // NNS GRID
+
+#if BOUNDARIES != TRANSPARENT
+// ghost variablen -------------------------------------------------------------------------------------------------
+    int MAX_GHOST_INTERACTIONS;
+#endif // NOT TRANSPARENT
+
+// functions -------------------------------------------------------------------------------------------------
+    void accelerate(const double &h);
+    void damping(const double &h);
+    void integrate(const double &t);
+    void boundary(const Domain &domain);    
+    void save(std::string filename, double simTime);
+
+// NNS functions -------------------------------------------------------------------------------------------------------
+void compNN(Domain &domain, const double &h);
+#if NNS == GRID
     void assignParticlesAndCells(Domain &domain);
-    void compNN(Domain &domain, const double &h);
+#endif // NNS GRID
+
+// boundary functions-------------------------------------------------------------------------------------------------------
+    void getDomainLimits(double *domainLimits);
+
+// compelation functions -------------------------------------------------------------------------------------------------------
     void compDensity(const double &h);
     void compPressure(const double &gamma);
     void gradient(double *f, double (*grad)[DIM]);
 
+// sanity check functions ------------------------------------------------------------------------------------
     double sumMass();
     double sumMomentum(const int r);
     double sumEnergy();
     
-    void accelerate(const double &h);
-    void damping(const double &h);
-
-    void integrate(const double &t);
-
-    void getDomainLimits(double *domainLimits);
-    void boundary(const Domain &domain);
-    void save(std::string filename, double simTime);
-
+#if BOUNDARIES != TRANSPARENT
+// ghost functions -------------------------------------------------------------------------------------------------
+    void createGhostParticles(Domain &domain, Particles &ghosts, const double &h);
+    void ghostNNS(Domain &domain, const Particles &ghosts, const double &h);
+    void compDensity(const Particles &ghosts, const double &h);
+    void updateGhostState(Particles &ghosts);
+#endif // NOT TRANSPARENT
+  
 private:
+// object variablen ---------------------------------------------------------------------------------------------  
     bool ghosts; // tells if particl is virtuel or real
 
     int *nnl; // nearest neighbor list
-    int *noi; // number of interactionsdouble 
-    
+    int *noi; // number of interactionsdouble
+
+#if BOUNDARIES != TRANSPARENT
+// ghost variablen -------------------------------------------------------------------------------------------------
+    int *nnlGhosts;
+    int *noiGhosts;
+    int *ghostMap;
+    int *parent; // if class holds ghost particles the parent node is stored
+#endif // NOT TRANSPARENT
+
+// namespace ------------------------------------------------------------------------------------
     double (*W)(const double&, const double&){ &KernelR::cubicSpline };
     double (*dW)(const double&, const double&){ &NablaKernelR::cubicSpline };
 
-    int getNNLidx(int i, int n);
-
+// functions -------------------------------------------------------------------------------------------------
     double distance(const int i, const int n);
+
+#if BOUNDARIES != TRANSPARENT
+// ghost functions -------------------------------------------------------------------------------------------------
+    double distance(const Particles &ghosts,const int i, const int ip);
+#endif // NOT TRANSPARENT
+
+ // helper functions ------------------------------------------------------------------------------------------  
+    int getNNLidx(const int &i, const int &n);
 
     double sumMomentumX();
 #if DIM >= 2

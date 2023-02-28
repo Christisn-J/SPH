@@ -41,10 +41,33 @@ Particles::Particles(int nParticles, Configuration config, bool ghosts) : N { nP
     vzGrad = new double[N][DIM];
 #endif // 3D
 
-    nnl = new int[N*MAX_INTERACTIONS];
-    noi = new int[N];
+#if NNS == GRID
     cell = new int[N];
+#endif // NNS GRID
 
+#if BOUNDARIES != TRANSPARENT
+// ghost variablen -------------------------------------------------------------------------------------------------
+    if (config.maxGhostInteractions < N){
+        MAX_GHOST_INTERACTIONS = config.maxGhostInteractions;
+    }else{
+        MAX_GHOST_INTERACTIONS = N;
+    }
+#endif // NOT TRANSPARENT
+
+    if (!ghosts){
+    // object variablen -------------------------------------------------------------------------------------------------
+        nnl = new int[N*MAX_INTERACTIONS];
+        noi = new int[N];
+#if BOUNDARIES != TRANSPARENT
+        // estimated memory allocation
+        nnlGhosts = new int[N*MAX_GHOST_INTERACTIONS];
+        noiGhosts = new int[N];
+        ghostMap = new int[N*MAX_GHOSTS_PER_PARTICLE];
+    } else {
+    // ghost variablen -------------------------------------------------------------------------------------------------
+        parent = new int[N]; // store index of original node
+#endif // NOT TRANSPARENT
+    }
 }
 
 // deconstructor --------------------------------------------------------------------------------------------- 
@@ -75,27 +98,36 @@ Particles::~Particles() {
         delete[] vzDelta;
         delete[] vzGrad;
 #endif // 3D
-
-    delete[] nnl;
-    delete[] noi;
     
-#if BOUNDARIES != TRANSPARENT
+#if NNS == GRID
     delete[] cell;
-#endif
+#endif // NNS GRID
+
+    if (!ghosts) {
+        delete[] nnl;
+        delete[] noi;
+#if BOUNDARIES != TRANSPARENT
+        delete[] nnlGhosts;
+        delete[] noiGhosts;
+        delete[] ghostMap;
+    } else {
+        delete[] parent;
+#endif // NOT TRANSPARENT
+    }
 }
 
 // functions -------------------------------------------------------------------------------------------------
-double Particles::distance(const int i, const int n){
+double Particles::distance(const int i, const int ip){
 
     double sum = 0; 
 #if DIM >= 1
-    sum += pow(x[i]-x[n],2);
+    sum += pow(x[i]-x[ip],2);
 #endif // 1D
 #if DIM >= 2
-    sum += pow(y[i]-y[n],2);
+    sum += pow(y[i]-y[ip],2);
 #endif // 2D
 #if DIM == 3
-    sum += pow(z[i]-z[n],2);
+    sum += pow(z[i]-z[ip],2);
 #endif // 3D
 
     return sqrt(sum);
@@ -192,7 +224,6 @@ void Particles::integrate(const double &dt){
 #if TESTCASE == DEBUG
         Logger(DEBUG) << "\tv_n+1\t" << vx[i] << " / " << vy[i];
 #endif // TESTCASE
-
     }
 
     // update possition
@@ -212,7 +243,6 @@ void Particles::integrate(const double &dt){
 #if TESTCASE == DEBUG
         Logger(DEBUG) << "\tpos_n+1\t" << x[i] << " / " << y[i] ;
 #endif // TESTCASE
-
     }
 }
 
@@ -244,11 +274,12 @@ for(int i=0; i<N; ++i ){
 }
 
 void Particles::save(std::string filename, double simTime){
+Logger(DEBUG) << "test " << filename;
     // open output file
     HighFive::File h5File { filename, HighFive::File::ReadWrite |
                                       HighFive::File::Create |
                                       HighFive::File::Truncate };
-
+Logger(DEBUG) << "test ";
     // dimensions for datasets containing vectors
     std::vector<size_t> dataSpaceDims(2);
     dataSpaceDims[0] = std::size_t(N); // number of particles
@@ -439,6 +470,9 @@ void Particles::compNN(Domain &domain, const double &h){
             Logger(WARN) << "No neighbors for particle " << i << ". Caution.";
         }
         noi[i] = interact;
+#if TESTCASE == DEBUG      
+        Logger(DEBUG) << i  << "\tnoi "<< noi[i];
+#endif // TESTCASE
 #endif // NNS GRID
 
     }
@@ -501,8 +535,8 @@ void Particles::compDensity(const double &h){
         rho[i] = 0; 
 
         for(int n=0; n<noi[i]; ++n){
-            int j = nnl[getNNLidx(i,n)];
-            rho[i] += m[j]*W(distance(i,j),h);
+            int ip = nnl[getNNLidx(i,n)];
+            rho[i] += m[ip]*W(distance(i,ip),h);
         }
 
 #if TESTCASE == DEBUG
@@ -580,8 +614,303 @@ double Particles::sumEnergy(){
     return E;
 }
 
+#if BOUNDARIES != TRANSPARENT
+// ghost functions -------------------------------------------------------------------------------------------------
+void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const double &h){
+    // to note for non-implemented permutations and number of MAX_GHOSTS_PER_PARTICLE
+    if(2*h < abs(domain.bounds.maxX-domain.bounds.minX) 
+#if DIM >= 2   
+    || 2*h < abs(domain.bounds.maxY-domain.bounds.minY)
+#endif // 2D
+#if DIM == 3 
+    || 2*h < abs(domain.bounds.maxZ-domain.bounds.minZ)
+#endif // 3D
+    ){ 
+        Logger(ERROR) << "Ghost cells not implemented for such great kernelsize. - Aborting.";
+        exit(2);
+    }
+
+    int iGhost = 0;
+    int iDeltaGhost = 0;
+    for(int i=0; i<N; ++i) {
+        // initialis found
+        bool foundGhostX = false;
+#if DIM >= 2 
+        bool foundGhostY = false;
+#endif // 2D
+#if DIM == 3
+        bool foundGhostZ = false;
+#endif // 3D
+
+        // initialis ghost map for each particle
+        for(int n=0; n<MAX_GHOSTS_PER_PARTICLE; ++n){
+            ghostMap[i*MAX_GHOSTS_PER_PARTICLE+n] = -1;
+        }
+
+        // x-direction
+        if (x[i] <= domain.bounds.minX + h){ // && x[i] > domain.bounds.minX) {
+            ghosts.x[iGhost] = domain.bounds.maxX + (x[i] - domain.bounds.minX);
+            foundGhostX = true;
+        } else if (domain.bounds.maxX - h < x[i]){ // && x[i] < domain.bounds.maxX) {
+            ghosts.x[iGhost] = domain.bounds.minX - (domain.bounds.maxX - x[i]);
+            foundGhostX = true;
+        } else {
+            ghosts.x[iGhost] = x[i];
+        }
+
+#if DIM >= 2 
+        // y-direction
+        if (y[i] <= domain.bounds.minY + h){ // && y[i] > domain.bounds.minY) {
+            ghosts.y[iGhost] = domain.bounds.maxY + (y[i] - domain.bounds.minY);
+            foundGhostY = true;
+        } else if (domain.bounds.maxY - h < y[i]){ // && y[i] < domain.bounds.maxY) {
+            ghosts.y[iGhost] = domain.bounds.minY - (domain.bounds.maxY - y[i]);
+            foundGhostY = true;
+        } else {
+            ghosts.y[iGhost] = y[i];
+        }
+#endif // 2D
+#if DIM == 3
+        // z-direction
+        if (y[i] <= domain.bounds.minZ + h){ // && z[i] > domain.bounds.minZ) {
+            ghosts.z[iGhost] = domain.bounds.maxZ + (z[i] - domain.bounds.minZ);
+            foundGhostZ = true;
+        } else if (domain.bounds.maxY - h < y[i]){ // && z[i] < domain.bounds.maxZ) {
+            ghosts.z[iGhost] = domain.bounds.minZ - (domain.bounds.maxZ - z[i]);
+            foundGhostZ = true;
+        } else {
+            ghosts.z[iGhost] = z[i];
+        }
+#endif // 3D
+
+        // register found ghost particle
+        if (foundGhostX 
+#if DIM >= 2        
+        || foundGhostY 
+#endif // 2D
+#if DIM == 3        
+        || foundGhostZ
+#endif // 3D
+        ) {
+            ghostMap[i*MAX_GHOSTS_PER_PARTICLE+0] = iGhost;
+            ghosts.parent[iGhost] = i;
+
+            // initialis ghost
+            ghosts.m[iGhost] = m[i];
+
+            // next ghost particle
+            ++iGhost;
+        }
+
+        // create extra ghost particles if all are true (corner)
+        if (foundGhostX 
+#if DIM >= 2        
+        && foundGhostY 
+#endif // 2D
+#if DIM == 3        
+        && foundGhostZ
+#endif // 3D
+        ){
+            // fix direction
+            ghosts.y[iGhost] = y[i];
+#if DIM == 3
+            ghosts.z[iGhost] = z[i];
+#endif // 3D
+            // x-direction
+            if (x[i] <= domain.bounds.minX + h){ // && x[i] > domain.bounds.minX) {
+                ghosts.x[iGhost] = domain.bounds.maxX + (x[i] - domain.bounds.minX);
+            } else if (domain.bounds.maxX - h < x[i]){ // && x[i] < domain.bounds.maxX) {
+                ghosts.x[iGhost] = domain.bounds.minX - (domain.bounds.maxX - x[i]);
+            }
+
+            // register ghost particle
+            ghostMap[i*MAX_GHOSTS_PER_PARTICLE+1] = iGhost;
+            ghosts.parent[iGhost] = i;
+
+            // initialis ghost
+            ghosts.m[iGhost] = m[i];
+
+            // next ghost particle
+            ++iGhost;
+
+#if DIM >= 2 
+           // fix direction
+            ghosts.x[iGhost] = x[i];
+#if DIM == 3
+            ghosts.z[iGhost] = z[i];
+#endif // 3D
+            // y-direction
+            if (y[i] <= domain.bounds.minY + h){ // && y[i] > domain.bounds.minY) {
+                ghosts.y[iGhost] = domain.bounds.maxY + (y[i] - domain.bounds.minY);
+            } else if (domain.bounds.maxY - h < y[i]){ // && y[i] < domain.bounds.maxY) {
+                ghosts.y[iGhost] = domain.bounds.minY - (domain.bounds.maxY - y[i]);
+            }
+
+            // register ghost particle
+            ghostMap[i*MAX_GHOSTS_PER_PARTICLE+2] = iGhost;
+            ghosts.parent[iGhost] = i;
+
+            // initialis ghost
+            ghosts.m[iGhost] = m[i];
+
+            // next ghost particle
+            ++iGhost; 
+#endif // 2D
+
+#if DIM == 3
+            // z-direction
+            // fix direction
+                    ghosts.x[iGhost] = x[i];
+                    ghosts.y[iGhost] = y[i];
+            // z-direction
+            if (z[i] <= domain.bounds.minZ + h){ // && z[i] > domain.bounds.minZ) {
+                ghosts.z[iGhost] = domain.bounds.maxZ + (z[i] - domain.bounds.minZ);
+            } else if (domain.bounds.maxY - h < z[i]){ // && z[i] < domain.bounds.maxZ) {
+                ghosts.z[iGhost] = domain.bounds.minZ - (domain.bounds.maxZ - z[i]);
+            }
+
+            // register ghost particle
+            ghostMap[i*MAX_GHOSTS_PER_PARTICLE+3] = iGhost;
+            ghosts.parent[iGhost] = i;
+
+            // initialis ghost
+            ghosts.m[iGhost] = m[i];
+
+            // next ghost particle
+            ++iGhost;
+
+            // diagonal
+/// TODO: optimization by using previous ghost particles
+            // x-direction
+            if (x[i] <= domain.bounds.minX + h){ // && x[i] > domain.bounds.minX) {
+                ghosts.x[iGhost] = domain.bounds.maxX + (x[i] - domain.bounds.minX);
+            } else if (domain.bounds.maxX - h < x[i]){ // && x[i] < domain.bounds.maxX) {
+                ghosts.x[iGhost] = domain.bounds.minX - (domain.bounds.maxX - x[i]);
+            }
+            // y-direction
+            if (y[i] <= domain.bounds.minY + h){ // && y[i] > domain.bounds.minY) {
+                ghosts.y[iGhost] = domain.bounds.maxY + (y[i] - domain.bounds.minY);
+            } else if (domain.bounds.maxY - h < y[i]){ // && y[i] < domain.bounds.maxY) {
+                ghosts.y[iGhost] = domain.bounds.minY - (domain.bounds.maxY - y[i]);
+            }
+            // z-direction
+            if (z[i] <= domain.bounds.minZ + h){ // && z[i] > domain.bounds.minZ) {
+                ghosts.z[iGhost] = domain.bounds.maxZ + (z[i] - domain.bounds.minZ);
+            } else if (domain.bounds.maxY - h < y[i]){ // && y[i] < domain.bounds.maxY) {
+                ghosts.z[iGhost] = domain.bounds.minY - (domain.bounds.maxY - y[i]);
+            }
+
+            // register ghost particle
+            ghostMap[i*MAX_GHOSTS_PER_PARTICLE+4] = iGhost;
+            ghosts.parent[iGhost] = i;
+
+            // initialis ghost
+            ghosts.m[iGhost] = m[i];
+
+            // next ghost particle
+            ++iGhost;  
+        
+#endif // 3D
+        }
+
+#if TESTCASE == DEBUG
+        Logger(DEBUG) << i  << "\tg "<< iGhost;      
+#endif
+
+    }
+    ghosts.N = iGhost;    
+}
+
+double Particles::distance(const Particles &ghosts,const int i, const int ip){
+    double sum = 0; 
+#if DIM >= 1
+    sum += pow(x[i]-ghosts.x[ip],2);
+#endif // 1D
+#if DIM >= 2
+    sum += pow(y[i]-ghosts.y[ip],2);
+#endif // 2D
+#if DIM == 3
+    sum += pow(z[i]-ghosts.z[ip],2);
+#endif // 3D
+    return sqrt(sum);
+}
+
+void Particles::ghostNNS(Domain &domain, const Particles &ghosts, const double &h){
+
+    for(int i=0; i<N; ++i){
+        int noiBuf = 0;
+
+#if NNS >= PROTFORCE
+        for(int iGhost=0; iGhost<ghosts.N; ++iGhost){
+             if(i == iGhost){
+                // not interact with each self
+                continue;
+            }
+
+            // cheack distance beetween particles
+            if(distance(ghosts, i,iGhost) < h){
+                if(noiBuf >= MAX_GHOST_INTERACTIONS){
+                    Logger(ERROR) << "MAX_GHOST_INTERACTIONS exceeded for particle "
+                                  << i << " - Aborting.";
+                    exit(3);
+                }
+                nnlGhosts[noiBuf+i*MAX_GHOST_INTERACTIONS] = iGhost;
+                ++noiBuf;
+            }
+        }
+        noiGhosts[i] = noiBuf;
+#if TESTCASE == DEBUG      
+        Logger(DEBUG) << i  << "\tnoi "<< noiGhosts[i] << " -> " << noiGhosts[i]+noi[i];
+#endif // TESTCASE
+#endif // NNS PROTFORCE
+    }
+}
+
+void Particles::compDensity(const Particles &ghosts, const double &h){
+    for(int i=0; i<N; ++i){
+        // no initialiase, use rho of particles
+        // rho[i] = rho[i];
+        for(int n=0; n<noiGhosts[i]; ++n){
+#if TESTCASE == DISABLE
+        Logger(DEBUG) << i  << "\tn "<< n;      
+#endif
+            int ip = nnlGhosts[n+i*MAX_GHOST_INTERACTIONS];
+#if TESTCASE == DISABLE
+        Logger(DEBUG) << "\tip "<< ip << "\tp "<< ghosts.parent[ip];        
+#endif
+            /// TODO: initilase gohst particles
+            //rho[i] += ghosts.m[ip]*W(distance(ghosts, i,ip),h);
+            rho[i] += 1*W(distance(ghosts, i,ip),h);
+        }
+
+#if TESTCASE == DEBUG
+        Logger(DEBUG) << i << "\trho "<< rho[i];      
+#endif // TESTCASE
+        if(rho[i] <= 0.){
+            Logger(WARN) << "Zero or negative density @" << i;
+        }
+    }
+}
+
+void Particles::updateGhostState(Particles &ghostParticles){
+    for (int i=0; i<N*MAX_GHOSTS_PER_PARTICLE; ++i){
+        if (ghostMap[i] >= 0){
+            ghostParticles.rho[ghostMap[i]] = rho[i/(DIM+1)];
+            ghostParticles.P[ghostMap[i]] = P[i/(DIM+1)];
+            ghostParticles.vx[ghostMap[i]] = vx[i/(DIM+1)];
+#if DIM >= 2
+            ghostParticles.vy[ghostMap[i]] = vy[i/(DIM+1)];
+#endif // 2D
+#if DIM == 3
+            ghostParticles.vz[ghostMap[i]] = vz[i/(DIM+1)];
+#endif // 3D
+        }
+    }
+}
+#endif // NOT TRANSPARENT
+
 // helper functions ------------------------------------------------------------------------------------------
-int Particles::getNNLidx(int i, int n){
+int Particles::getNNLidx(const int &i, const int &n){
     return i*MAX_INTERACTIONS+n;
 }
 

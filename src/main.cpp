@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
     Logger(INFO) << "    > Output directory: " << config.outDir;
     config.timeStep = read.getVal<double>("timeStep");
     Logger(INFO) << "    > Time step: " << config.timeStep;
-    config.timeEnd = read.getVal<double>("timeStart");
+    config.timeStart = read.getVal<double>("timeStart");
     Logger(INFO) << "    > Start of simulation: " << config.timeStart;
     config.timeEnd = read.getVal<double>("timeEnd");
     Logger(INFO) << "    > End of simulation: " << config.timeEnd;
@@ -82,6 +82,9 @@ int main(int argc, char *argv[]){
     Logger(INFO) << "    > Adiabatic index for ideal gas EOS gamma = " << config.gamma;
 
 #if BOUNDARIES != TRANSPARENT
+    config.maxGhostInteractions = read.getVal<int>("maxGhostInteractions");
+    Logger(INFO) << "    >Max number of Ghost Interactions: " << config.maxGhostInteractions;
+
     auto boxLimits = read.getObj("boxLimits");
     config.boxLimits[0] = boxLimits.getVal<double>("lowerX");
     config.boxLimits[DIM] = boxLimits.getVal<double>("upperX");

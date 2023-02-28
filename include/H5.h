@@ -17,7 +17,7 @@ public:
     void load(const std::string &file);
     void initialize(Particles &particles);
     /// TODO: implement save
-    void save(const std::string &file, Particles &particles); 
+    //void save(const std::string &file, Particles &particles); 
 
     int getN() const { return nParticles; };
 

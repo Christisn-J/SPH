@@ -15,8 +15,8 @@ def createPossitionPlot(h5File, outDir, flagGrad, flagVel, flagNN):
     fig, ax = plt.subplots()
     rhoPlt = ax.scatter(pos[:,0], pos[:,1], c=rho, s=100.)
 
-    ax.set_xlim((-5, 5))
-    ax.set_ylim((-5, 5))
+    ax.set_xlim((-1.5, 1.5))
+    ax.set_ylim((-1.5, 1.5))
 
     fig.colorbar(rhoPlt, ax=ax)
 

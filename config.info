@@ -7,7 +7,7 @@
 initFile ./2debug_N9_2D.h5
 
 ; output directory for particle distribution h5 files
-outDir ./out/
+outDir ./out
 
 ; fixed time step
 timeStep 0.05
@@ -16,7 +16,7 @@ timeStep 0.05
 timeStart 0.0
 
 ; end of the simulation
-timeEnd 10
+timeEnd 0.05
 
 ; output particle distribution each h5DumpInterval steps
 storeFrequency 5
@@ -25,17 +25,21 @@ storeFrequency 5
 maxInteractions 400
 
 ; kernel size for meshless scheme
-h 2
+h 0.9
 
 ; adiabatic index
 gamma 1.6666666666666667
 
+; ignored when BOUNDARIES < 1 in parameter.h ---------------------------------------------------------------------------------------------------------------
+; maximum number of interactions for each ghost particle
+maxGhostInteractions 300
+
 ; periodic boundaries of box
 boxLimits {
-    lowerX -5.
-    lowerY -5.
+    lowerX -1.5
+    lowerY -1.5
     lowerZ -nan
-    upperX 5
-    upperY 5
+    upperX 1.5
+    upperY 1.5
     upperZ -nan
 }

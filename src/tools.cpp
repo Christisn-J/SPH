@@ -30,7 +30,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 // changeing grid ------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Computing domain limits ...";
         double domainLimits[DIM*2];
-        particles->getDomainLimits(domainLimits);
+        particles.getDomainLimits(domainLimits);
         Domain::Cell boundingBox { domainLimits };
         domain.bounds = boundingBox;
         /// TODO: domain.printout();
@@ -39,7 +39,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         Logger(INFO) << "    > ... done.";
 #endif // TRANSPARENT
 
-#if NNS == 1
+#if NNS == GRID
         Logger(INFO) << "    > Assigning particles ...";
         particles.assignParticlesAndCells(domain);
         Logger(INFO) << "    > ... done.";
@@ -50,27 +50,39 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 // ghost particles -------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Creating ghost particles ...";
         Logger(DEBUG) << "      > Creating ghost particles ... ";
-        particles.createGhostParticles(domain, ghosts, config.kernelSize);
+        particles.createGhostParticles(domain, ghosts, config.h);
         Logger(DEBUG) << "      > ... found " << ghosts.N << " ghosts";
         Logger(INFO) << "    > ... done.";
+        Logger(INFO) << "      > Update ghosts";
+        //particles.updateGhostState(ghosts);
 #endif // NOT TRANSPARENT
 
 // determine -------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Nearest neighbor search";
         particles.compNN(domain, config.h);
 
+#if BOUNDARIES != TRANSPARENT
+// ghost particles -------------------------------------------------------------------------------------------------
+        Logger(DEBUG) << "      > Ghosts NNS";
+        particles.ghostNNS(domain, ghosts, config.h);
+#endif // NOT TRANSPARENT
+
         Logger(INFO) << "    > Computing density";
         particles.compDensity(config.h);
+
+#if BOUNDARIES != TRANSPARENT
+// ghost particles -------------------------------------------------------------------------------------------------
+        Logger(INFO) << "      > Add ghosts density";
+        particles.compDensity(ghosts, config.h);
+#endif // NOT TRANSPARENT
 
         Logger(INFO) << "    > Computing pressure";
         particles.compPressure(config.gamma);
 
 #if BOUNDARIES != TRANSPARENT
 // ghost particles -------------------------------------------------------------------------------------------------
-        Logger(DEBUG) << "      > Ghosts NNS";
-        particles.ghostNNS(domain, ghosts, config.kernelSize);
-        
-        particles.compDensity(ghosts, config.kernelSize);
+        Logger(INFO) << "      > Update ghosts";
+        particles.updateGhostState(ghosts);
 #endif // NOT TRANSPARENT
 
 // conservation quantities ----------------------------------------------------------------------------------
@@ -88,7 +100,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 #if TYP != ISOTERM
         // change time step
         Logger(INFO) << "    > Selecting global timestep ... ";
-        timeStep = particles->compGlobalTimestep(config.gamma, config.kernelSize);
+        timeStep = particles->compGlobalTimestep(config.gamma, config.h);
         Logger(INFO) << "    > dt = " << timeStep << " selected.";
 #else   
         // constant time step
@@ -113,9 +125,12 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
       if (step % config.storeFrequency == 0) {
             std::stringstream stepss;
             Logger(INFO) << "   > Dump particle distribution";
+
             stepss << std::setw(6) << std::setfill('0') << step;
             Logger(INFO) << "      > save particles to file";
+                        Logger(DEBUG) << "      > start";
             particles.save(config.outDir + "/" + stepss.str() + std::string(".h5"), t);
+                        Logger(DEBUG) << "      > finisch";
         }
 
 // break condition -------------------------------------------------------------------------------------------
@@ -136,7 +151,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 
 // update ----------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Updating state";     
-        particles.integrate(timeStep, domain);
+        particles.integrate(timeStep);
 
         t += timeStep;
         ++step;

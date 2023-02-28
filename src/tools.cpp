@@ -82,7 +82,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 #if BOUNDARIES != TRANSPARENT
 // ghost particles -------------------------------------------------------------------------------------------------
         Logger(INFO) << "      > Update ghosts";
-        particles.updateGhostState(ghosts);
+        //particles.updateGhostState(ghosts);
 #endif // NOT TRANSPARENT
 
 // conservation quantities ----------------------------------------------------------------------------------

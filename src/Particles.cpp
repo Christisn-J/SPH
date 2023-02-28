@@ -192,7 +192,7 @@ void Particles::accelerate(const double &h){
 void Particles::damping(const double &h){
     for(int i=0; i<N; ++i){
 
-#if TESTCASE == DEBUG
+#if TESTCASE == DISABLE
         vxDelta[i] += -vxDelta[i];
 #if DIM >= 2
         vyDelta[i] += -vyDelta[i];
@@ -618,12 +618,12 @@ double Particles::sumEnergy(){
 // ghost functions -------------------------------------------------------------------------------------------------
 void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const double &h){
     // to note for non-implemented permutations and number of MAX_GHOSTS_PER_PARTICLE
-    if(2*h < abs(domain.bounds.maxX-domain.bounds.minX) 
+    if(abs(domain.bounds.maxX-domain.bounds.minX) < 2*h
 #if DIM >= 2   
-    || 2*h < abs(domain.bounds.maxY-domain.bounds.minY)
+    || abs(domain.bounds.maxY-domain.bounds.minY) < 2*h
 #endif // 2D
 #if DIM == 3 
-    || 2*h < abs(domain.bounds.maxZ-domain.bounds.minZ)
+    || abs(domain.bounds.maxZ-domain.bounds.minZ) < 2*h
 #endif // 3D
     ){ 
         Logger(ERROR) << "Ghost cells not implemented for such great kernelsize. - Aborting.";
@@ -631,8 +631,9 @@ void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const do
     }
 
     int iGhost = 0;
-    int iDeltaGhost = 0;
     for(int i=0; i<N; ++i) {
+        int iGhostDelta = 0;
+
         // initialis found
         bool foundGhostX = false;
 #if DIM >= 2 
@@ -700,6 +701,7 @@ void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const do
 
             // next ghost particle
             ++iGhost;
+            ++iGhostDelta;
         }
 
         // create extra ghost particles if all are true (corner)
@@ -732,6 +734,7 @@ void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const do
 
             // next ghost particle
             ++iGhost;
+            ++iGhostDelta;
 
 #if DIM >= 2 
            // fix direction
@@ -754,7 +757,8 @@ void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const do
             ghosts.m[iGhost] = m[i];
 
             // next ghost particle
-            ++iGhost; 
+            ++iGhost;
+            ++iGhostDelta; 
 #endif // 2D
 
 #if DIM == 3
@@ -778,6 +782,7 @@ void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const do
 
             // next ghost particle
             ++iGhost;
+            ++iGhostDelta;
 
             // diagonal
 /// TODO: optimization by using previous ghost particles
@@ -804,17 +809,19 @@ void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const do
             ghostMap[i*MAX_GHOSTS_PER_PARTICLE+4] = iGhost;
             ghosts.parent[iGhost] = i;
 
+/// TODO: initialis function ghosts
             // initialis ghost
             ghosts.m[iGhost] = m[i];
 
             // next ghost particle
-            ++iGhost;  
+            ++iGhost;
+            ++iGhostDelta;  
         
 #endif // 3D
         }
 
 #if TESTCASE == DEBUG
-        Logger(DEBUG) << i  << "\tg "<< iGhost;      
+        Logger(DEBUG) << i  << "\tg "<< iGhostDelta << " -> " <<iGhost;      
 #endif
 
     }
@@ -836,11 +843,11 @@ double Particles::distance(const Particles &ghosts,const int i, const int ip){
 }
 
 void Particles::ghostNNS(Domain &domain, const Particles &ghosts, const double &h){
-
+/// TODO: Debuge 
     for(int i=0; i<N; ++i){
         int noiBuf = 0;
 
-#if NNS >= PROTFORCE
+#ifdef PROTFORCE
         for(int iGhost=0; iGhost<ghosts.N; ++iGhost){
              if(i == iGhost){
                 // not interact with each self
@@ -878,9 +885,8 @@ void Particles::compDensity(const Particles &ghosts, const double &h){
 #if TESTCASE == DISABLE
         Logger(DEBUG) << "\tip "<< ip << "\tp "<< ghosts.parent[ip];        
 #endif
-            /// TODO: initilase gohst particles
-            //rho[i] += ghosts.m[ip]*W(distance(ghosts, i,ip),h);
-            rho[i] += 1*W(distance(ghosts, i,ip),h);
+            // Attention: initilase gohst particles (m[ip])
+            rho[i] += ghosts.m[ip]*W(distance(ghosts, i,ip),h);
         }
 
 #if TESTCASE == DEBUG
@@ -892,17 +898,18 @@ void Particles::compDensity(const Particles &ghosts, const double &h){
     }
 }
 
-void Particles::updateGhostState(Particles &ghostParticles){
+void Particles::updateGhostState(Particles &ghosts){
     for (int i=0; i<N*MAX_GHOSTS_PER_PARTICLE; ++i){
         if (ghostMap[i] >= 0){
-            ghostParticles.rho[ghostMap[i]] = rho[i/(DIM+1)];
-            ghostParticles.P[ghostMap[i]] = P[i/(DIM+1)];
-            ghostParticles.vx[ghostMap[i]] = vx[i/(DIM+1)];
+/// TODO: use ghost.perent instat i/MAX_GHOSTS = i % MAX_GHOSTS for debug
+            ghosts.rho[ghostMap[i]] = rho[i/MAX_GHOSTS_PER_PARTICLE];
+            ghosts.P[ghostMap[i]] = P[i/MAX_GHOSTS_PER_PARTICLE];
+            ghosts.vx[ghostMap[i]] = vx[i/MAX_GHOSTS_PER_PARTICLE];
 #if DIM >= 2
-            ghostParticles.vy[ghostMap[i]] = vy[i/(DIM+1)];
+            ghosts.vy[ghostMap[i]] = vy[i/MAX_GHOSTS_PER_PARTICLE];
 #endif // 2D
 #if DIM == 3
-            ghostParticles.vz[ghostMap[i]] = vz[i/(DIM+1)];
+            ghosts.vz[ghostMap[i]] = vz[i/MAX_GHOSTS_PER_PARTICLE];
 #endif // 3D
         }
     }

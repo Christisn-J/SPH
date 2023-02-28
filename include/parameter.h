@@ -34,7 +34,7 @@
  * 0: protforce
  * 1: TODO: ---
 **/
-#define NNS 0
+#define NNS 1
 
 /** define debug level to enable additional output:
  * 0: iostherm (soundspeed is constant)

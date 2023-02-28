@@ -16,7 +16,7 @@ timeStep 0.05
 timeStart 0.0
 
 ; end of the simulation
-timeEnd 0.05
+timeEnd 10
 
 ; output particle distribution each h5DumpInterval steps
 storeFrequency 5
@@ -25,7 +25,7 @@ storeFrequency 5
 maxInteractions 400
 
 ; kernel size for meshless scheme
-h 0.9
+h 1.25
 
 ; adiabatic index
 gamma 1.6666666666666667

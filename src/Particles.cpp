@@ -161,8 +161,16 @@ void Particles::accelerate(const double &h){
 #endif // 3D
 
 #if TESTCASE == DEBUG
-        Logger(DEBUG) << i << "\ta " << vxDelta[i] << " / " << vyDelta[i] ;      
+        Logger(DEBUG) << i << "\ta_n  :\t" << vxDelta[i]
+#if DIM >= 2
+        << " | " << vyDelta[i] 
+#endif // 2D
+#if DIM == 3
+        << " | " << vzDelta[i]
+#endif // 3D 
+        ;    
 #endif // TESTCASE
+
         for(int n=0; n<noi[i]; ++n){
             int j = nnl[getNNLidx(i,n)];
             double r = distance(i,j);
@@ -184,7 +192,15 @@ void Particles::accelerate(const double &h){
         }
 
 #if TESTCASE == DEBUG
-        Logger(DEBUG) << i << "\ta " << vxDelta[i] << " / " << vyDelta[i] ;      
+        Logger(DEBUG) << "\ta_n+1:\t" << vxDelta[i]
+#if DIM >= 2
+        << " | " << vyDelta[i] 
+#endif // 2D
+#if DIM == 3
+        << " | " << vzDelta[i]
+#endif // 3D 
+        ;      
+           
 #endif // TESTCASE
     }
 }
@@ -208,9 +224,17 @@ void Particles::damping(const double &h){
 void Particles::integrate(const double &dt){
     // Eulerstep
     // update velossity
+    Logger(DEBUG) << "     > Updating velossity";  
     for(int i=0; i<N; ++i ){
 #if TESTCASE == DEBUG
-        Logger(DEBUG) << i << "\tv_n\t" << vx[i] << " / " << vy[i];
+        Logger(DEBUG) << i << "\tv_n  :\t" << vx[i]
+#if DIM >= 2
+        << " | " << vy[i] 
+#endif // 2D
+#if DIM == 3
+        << " | " << vz[i]
+#endif // 3D 
+        ;    
 #endif // TESTCASE
 
         vx[i] = vx[i] + dt * vxDelta[i]; 
@@ -222,14 +246,29 @@ void Particles::integrate(const double &dt){
 #endif // 3D
 
 #if TESTCASE == DEBUG
-        Logger(DEBUG) << "\tv_n+1\t" << vx[i] << " / " << vy[i];
+        Logger(DEBUG) << "\tv_n+1:\t" << vx[i]
+#if DIM >= 2
+        << " | " << vy[i] 
+#endif // 2D
+#if DIM == 3
+        << " | " << vz[i]
+#endif // 3D 
+        ;   
 #endif // TESTCASE
     }
 
     // update possition
+    Logger(DEBUG) << "    > Updating possition";  
     for(int i=0; i<N; ++i ){
 #if TESTCASE == DEBUG
-        Logger(DEBUG) << i << "\tpos_n\t" << x[i] << " / " << y[i] ;
+        Logger(DEBUG) << i << "\tx_n  :\t" << x[i]
+#if DIM >= 2
+        << " | " << y[i] 
+#endif // 2D
+#if DIM == 3
+        << " | " << z[i]
+#endif // 3D 
+        ;   
 #endif // TESTCASE
 
         x[i] = x[i]+ dt*vx[i];
@@ -241,7 +280,14 @@ void Particles::integrate(const double &dt){
 #endif // 3D
 
 #if TESTCASE == DEBUG
-        Logger(DEBUG) << "\tpos_n+1\t" << x[i] << " / " << y[i] ;
+        Logger(DEBUG) << "\tx_n+1:\t" << x[i]
+#if DIM >= 2
+        << " | " << y[i] 
+#endif // 2D
+#if DIM == 3
+        << " | " << z[i]
+#endif // 3D 
+        ;   
 #endif // TESTCASE
     }
 }
@@ -274,12 +320,11 @@ for(int i=0; i<N; ++i ){
 }
 
 void Particles::save(std::string filename, double simTime){
-Logger(DEBUG) << "test " << filename;
     // open output file
     HighFive::File h5File { filename, HighFive::File::ReadWrite |
                                       HighFive::File::Create |
                                       HighFive::File::Truncate };
-Logger(DEBUG) << "test ";
+
     // dimensions for datasets containing vectors
     std::vector<size_t> dataSpaceDims(2);
     dataSpaceDims[0] = std::size_t(N); // number of particles
@@ -388,7 +433,6 @@ void Particles::assignParticlesAndCells(Domain &domain){
         }
 #endif // 3D
 
-
         int iGrid = floorX 
 #if DIM >= 2
         + floorY * domain.cellsX
@@ -397,7 +441,12 @@ void Particles::assignParticlesAndCells(Domain &domain){
         + floorZ * domain.cellsX * domain.cellsY
 #endif // 3D
         ;
-        
+
+        if (iGrid < 0) {
+            Logger(ERROR) << "Out of bounds: iGrid is negativ" << " - Aborting.";
+            exit(1);
+        }
+
         domain.grid[iGrid].prtcls.push_back(i);
         cell[i] = iGrid; // assign cells to particles
     }
@@ -420,11 +469,11 @@ void Particles::compNN(Domain &domain, const double &h){
             // cheack distance beetween particles
             if(distance(i,n) < h){
                 if (interact >= N) {
-                    Logger(ERROR) << "Out of bounds: Number of particles";
+                    Logger(ERROR) << "Out of bounds: Number of particles" << " - Aborting.";
                     exit(1);
                 }
                 if (interact >= MAX_INTERACTIONS) {
-                    Logger(ERROR) << "To many interactions";
+                    Logger(ERROR) << "To many interactions" << " - Aborting.";
                     exit(1);
                 }
 
@@ -593,7 +642,7 @@ double Particles::sumMomentum(const int flag){
             break;
 #endif // 3D
         default:
-            Logger(ERROR) << "No such high Dimension is supported.";
+            Logger(ERROR) << "No such high Dimension is supported." << " - Aborting.";
             exit(1);
     }
 }

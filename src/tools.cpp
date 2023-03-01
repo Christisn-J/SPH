@@ -125,12 +125,9 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
       if (step % config.storeFrequency == 0) {
             std::stringstream stepss;
             Logger(INFO) << "   > Dump particle distribution";
-
             stepss << std::setw(6) << std::setfill('0') << step;
             Logger(INFO) << "      > save particles to file";
-                        Logger(DEBUG) << "      > start";
             particles.save(config.outDir + "/" + stepss.str() + std::string(".h5"), t);
-                        Logger(DEBUG) << "      > finisch";
         }
 
 // break condition -------------------------------------------------------------------------------------------
@@ -147,7 +144,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 #if BOUNDARIES != TRANSPARENT
 // boundary--- ----------------------------------------------------------------------------------------------- 
         particles.boundary(domain);
-#endif
+#endif // NOT TRANSPARENT
 
 // update ----------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Updating state";     

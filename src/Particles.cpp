@@ -324,14 +324,14 @@ void Particles::save(std::string filename, double simTime){
     HighFive::File h5File { filename, HighFive::File::ReadWrite |
                                       HighFive::File::Create |
                                       HighFive::File::Truncate };
-
+                                      
     // dimensions for datasets containing vectors
     std::vector<size_t> dataSpaceDims(2);
     dataSpaceDims[0] = std::size_t(N); // number of particles
     dataSpaceDims[1] = DIM;
 
     // create datasets
-    // TODO: Create a h5 object holding all meta data
+/// TODO: Create a h5 object holding all meta data
     HighFive::DataSet timeDataSet = h5File.createDataSet<double>("/time", HighFive::DataSpace(1));
     HighFive::DataSet rhoDataSet = h5File.createDataSet<double>("/rho", HighFive::DataSpace(N));
     HighFive::DataSet mDataSet = h5File.createDataSet<double>("/m", HighFive::DataSpace(N));
@@ -341,7 +341,6 @@ void Particles::save(std::string filename, double simTime){
     HighFive::DataSet rhoGradDataSet = h5File.createDataSet<double>("/rhoGrad", HighFive::DataSpace(dataSpaceDims));
     HighFive::DataSet PDataSet = h5File.createDataSet<double>("/P", HighFive::DataSpace(N));
     HighFive::DataSet noiDataSet = h5File.createDataSet<int>("/noi", HighFive::DataSpace(N));
-
 
     // containers for particle data
     std::vector<double> timeVec({ simTime });
@@ -360,6 +359,7 @@ void Particles::save(std::string filename, double simTime){
     std::vector<double> posBuf(DIM);
     std::vector<double> velBuf(DIM);
     std::vector<double> rhoGradBuf(DIM);
+
     for(int i=0; i<N; ++i){
         //Logger(DEBUG) << "      > Dumping particle @"  << i;
         // position
@@ -392,6 +392,7 @@ void Particles::save(std::string filename, double simTime){
 #endif // 3D
         rhoGradVec[i] = rhoGradBuf;
     }
+
     // write data
     timeDataSet.write(timeVec); // dummy vec containing one element
     rhoDataSet.write(rhoVec);
@@ -444,7 +445,7 @@ void Particles::assignParticlesAndCells(Domain &domain){
         ;
         
         if (iGrid < 0) {
-            Logger(ERROR) << "Out of bounds: iGrid is negative - Aborting.";
+            Logger(ERROR) << "Out of bounds: iGrid is negative. "<< iGrid <<" - Aborting.";
             exit(1);
         }
 
@@ -470,11 +471,11 @@ void Particles::compNNS(Domain &domain, const double &h){
             // cheack distance beetween particles
             if(distance(i,n) < h){
                 if (interact >= N) {
-                    Logger(ERROR) << "Out of bounds: Number of particles" << " - Aborting.";
+                    Logger(ERROR) << "Out of bounds: Number of particles" << i << " - Aborting.";
                     exit(1);
                 }
                 if (interact >= MAX_INTERACTIONS) {
-                    Logger(ERROR) << "To many interactions" << " - Aborting.";
+                    Logger(ERROR) << "To many interactions exceeded for particle " << i << " - Aborting.";
                     exit(1);
                 }
 
@@ -490,7 +491,7 @@ void Particles::compNNS(Domain &domain, const double &h){
 #endif // NNS PROTFORCE
 
 #if NNS == GRID
-        int numSearchCells = pow(3, DIM);
+        const int numSearchCells = pow(3, DIM);
         // search for nearest neighbors in the particle cell and neighbor cells
         int cells[numSearchCells];
         // neighboring cells (including particles cell)
@@ -499,14 +500,13 @@ void Particles::compNNS(Domain &domain, const double &h){
         for (int iNeighbor=0; iNeighbor<numSearchCells; ++iNeighbor){
             // loop over particle indices in all
             if (cells[iNeighbor] < 0){
-                /// TODO: handle ghost cells in external function
+/// TODO: handle ghost cells in external function
             } else {
                 for(auto const &iPrtcl : domain.grid[cells[iNeighbor]].prtcls){
                     if (iPrtcl != i){
                         if (distance(i,iPrtcl)  < h) {
                             if (interact >= MAX_INTERACTIONS) {
-                                Logger(ERROR) << "MAX_NUM_INTERACTIONS exceeded for particle "
-                                              << i << " - Aborting.";
+                                Logger(ERROR) << "To many interactions exceeded for particle " << i << " - Aborting.";
                                 exit(1);
                             }
                             nnl[i * MAX_INTERACTIONS+interact] = iPrtcl;
@@ -643,7 +643,7 @@ double Particles::sumMomentum(const int flag){
             break;
 #endif // 3D
         default:
-            Logger(ERROR) << "No such high Dimension is supported." << " - Aborting.";
+            Logger(ERROR) << "No such high Dimension is supported. "<< flag << " - Aborting.";
             exit(1);
     }
 }
@@ -676,7 +676,7 @@ void Particles::createGhostParticles(Domain &domain, Particles &ghosts, const do
     || abs(domain.bounds.maxZ-domain.bounds.minZ) < 2*h
 #endif // 3D
     ){ 
-        Logger(ERROR) << "Ghost cells not implemented for such great kernelsize. - Aborting.";
+        Logger(ERROR) << "Ghosts cells not implemented for such great kernelsize. - Aborting.";
         exit(2);
     }
 
@@ -877,7 +877,6 @@ double Particles::distance2G(const Particles &ghosts,const int i, const int ip){
 }
 
 void Particles::compNNG(Domain &domain, const Particles &ghosts, const double &h){
-/// TODO: Debuge 
     for(int i=0; i<N; ++i){
         int noiBuf = 0;
 
@@ -886,8 +885,7 @@ void Particles::compNNG(Domain &domain, const Particles &ghosts, const double &h
             // cheack distance beetween particles
             if(distance2G(ghosts, i,iGhost) < h){
                 if(noiBuf >= MAX_GHOST_INTERACTIONS){
-                    Logger(ERROR) << "MAX_GHOST_INTERACTIONS exceeded for particle "
-                                  << i << " - Aborting.";
+                    Logger(ERROR) << "To many interactions exceeded for ghosts "<< i << " - Aborting.";
                     exit(3);
                 }
                 nnlGhosts[noiBuf+i*MAX_GHOST_INTERACTIONS] = iGhost;

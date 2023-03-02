@@ -11,7 +11,8 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
 
 #if BOUNDARIES != TRANSPARENT
         /// TODO: memory optimization
-        Particles ghosts = Particles(DIM*particles.N, config, true); 
+        int memorySizeG = DIM*particles.N;
+        Particles ghosts = Particles(memorySizeG, config, true); 
 #endif // NOT TRANSPARENT
 
 // fixed grid ------------------------------------------------------------------------------------------------
@@ -52,6 +53,14 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         Logger(DEBUG) << "      > Creating ghost particles ... ";
         particles.createGhostParticles(domain, ghosts, config.h);
         Logger(DEBUG) << "      > ... found " << ghosts.N << " ghosts";
+
+        // check memory allocate size
+        if( memorySizeG < ghosts.N){ 
+                Logger(ERROR) << "Allocate memory for ghosts is to small. "
+                        << memorySizeG << " < "<< ghosts.N << " - Aborting.";
+                exit(2);
+        }
+
         Logger(INFO) << "    > ... done.";
         Logger(INFO) << "      > Initialize ghosts (m)";
         particles.updateGhostState(ghosts);
@@ -99,7 +108,7 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         timeStep = config.timeStep;
 #endif
 
-#ifndef DISABLED
+#ifdef DISABLED
 // gradient---------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Computing gradients";
         particles.gradient(particles.rho, particles.rhoGrad);

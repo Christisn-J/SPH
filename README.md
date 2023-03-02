@@ -10,11 +10,11 @@
 - intregration (Euler)          DONE
 - debug (testcase)              DONE
 
-### Stage 2: DOMAIN (---)
+### Stage 2: DOMAIN (02.03.23)
 - boundaries                    DONE
 - conditions (periodic)         DONE
 - virtual particles             DONE
-- debug (testcase)              TODO
+- debug (testcase)              DONE
 
 ### Stage 3: TESTCASES (--)
 - kevin-helmholtz               TODO

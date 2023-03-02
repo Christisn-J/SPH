@@ -11,7 +11,7 @@
 
 #define DISABLE -1
 
-#define MAX_GHOSTS_PER_PARTICLE 2*DIM-1
+#define MAX_GHOSTS_PER_PARTICLE int(2*DIM-1)
 
 struct Configuration {
     std::string initFile;

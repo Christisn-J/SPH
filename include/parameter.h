@@ -13,7 +13,7 @@
  * 1: additional checks
  * 2: dump NNL and ghosts to files
 **/
-#define DEBUG_LVL 1
+#define DEBUG_LVL 2
 
 /** define debug level to enable additional output:
  * 0: fluid in vacum

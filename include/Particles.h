@@ -55,7 +55,7 @@ public:
     void save(std::string filename, double simTime);
 
 // NNS functions -------------------------------------------------------------------------------------------------------
-void compNN(Domain &domain, const double &h);
+void compNNS(Domain &domain, const double &h);
 #if NNS == GRID
     void assignParticlesAndCells(Domain &domain);
 #endif // NNS GRID
@@ -76,9 +76,12 @@ void compNN(Domain &domain, const double &h);
 #if BOUNDARIES != TRANSPARENT
 // ghost functions -------------------------------------------------------------------------------------------------
     void createGhostParticles(Domain &domain, Particles &ghosts, const double &h);
-    void ghostNNS(Domain &domain, const Particles &ghosts, const double &h);
+    void compNNG(Domain &domain, const Particles &ghosts, const double &h);
     void compDensity(const Particles &ghosts, const double &h);
     void updateGhostState(Particles &ghosts);
+    void saveNNL(std::string filename, const Particles &ghosts);
+    void accelerate(const Particles &ghosts, const double &h);
+    void damping(const Particles &ghosts, const double &h);
 #endif // NOT TRANSPARENT
   
 private:
@@ -105,7 +108,7 @@ private:
 
 #if BOUNDARIES != TRANSPARENT
 // ghost functions -------------------------------------------------------------------------------------------------
-    double distance(const Particles &ghosts,const int i, const int ip);
+    double distance2G(const Particles &ghosts,const int i, const int ip);
 #endif // NOT TRANSPARENT
 
  // helper functions ------------------------------------------------------------------------------------------  

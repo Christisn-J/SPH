@@ -53,37 +53,29 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         particles.createGhostParticles(domain, ghosts, config.h);
         Logger(DEBUG) << "      > ... found " << ghosts.N << " ghosts";
         Logger(INFO) << "    > ... done.";
-        Logger(INFO) << "      > Update ghosts";
-        //particles.updateGhostState(ghosts);
+        Logger(INFO) << "      > Initialize ghosts (m)";
+        particles.updateGhostState(ghosts);
 #endif // NOT TRANSPARENT
 
 // determine -------------------------------------------------------------------------------------------------
         Logger(INFO) << "    > Nearest neighbor search";
-        particles.compNN(domain, config.h);
-
-#if BOUNDARIES != TRANSPARENT
-// ghost particles -------------------------------------------------------------------------------------------------
-        Logger(DEBUG) << "      > Ghosts NNS";
-        particles.ghostNNS(domain, ghosts, config.h);
-#endif // NOT TRANSPARENT
+        particles.compNNS(domain, config.h);
 
         Logger(INFO) << "    > Computing density";
         particles.compDensity(config.h);
-
+        
 #if BOUNDARIES != TRANSPARENT
 // ghost particles -------------------------------------------------------------------------------------------------
+        Logger(DEBUG) << "      > Nearest neighbor ghost";
+        particles.compNNG(domain, ghosts, config.h);
         Logger(INFO) << "      > Add ghosts density";
         particles.compDensity(ghosts, config.h);
+        Logger(INFO) << "      > Update ghosts (rho)";
+        particles.updateGhostState(ghosts);
 #endif // NOT TRANSPARENT
 
         Logger(INFO) << "    > Computing pressure";
         particles.compPressure(config.gamma);
-
-#if BOUNDARIES != TRANSPARENT
-// ghost particles -------------------------------------------------------------------------------------------------
-        Logger(INFO) << "      > Update ghosts";
-        //particles.updateGhostState(ghosts);
-#endif // NOT TRANSPARENT
 
 // conservation quantities ----------------------------------------------------------------------------------
         Logger(DEBUG) << "      SANITY CHECK > M_tot = " << particles.sumMass();
@@ -128,6 +120,17 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
             stepss << std::setw(6) << std::setfill('0') << step;
             Logger(INFO) << "      > save particles to file";
             particles.save(config.outDir + "/" + stepss.str() + std::string(".h5"), t);
+        
+#if DEBUG_LVL > 1
+#if BOUNDARIES != TRANSPARENT
+            Logger(INFO) << "      > Update ghosts";
+            particles.updateGhostState(ghosts);
+            Logger(INFO) << "      > Dump ghosts to file";
+            ghosts.save(config.outDir + "/" + stepss.str() + std::string("Ghosts.h5"), t);
+            Logger(INFO) << "      > Dump NNL to file";
+            particles.saveNNL(config.outDir + "/" + stepss.str() + std::string("NNL.h5"), ghosts);
+#endif // NOT TRANSPARENT
+#endif // DEBUG_LVL
         }
 
 // break condition -------------------------------------------------------------------------------------------
@@ -140,6 +143,15 @@ void algorithm(Configuration config, Particles particles, Domain::Cell bounds){
         Logger(INFO) << "    > Calculate acceleration";
         particles.accelerate(config.h);
         particles.damping(config.h);
+
+#if BOUNDARIES != TRANSPARENT
+// ghost particles -------------------------------------------------------------------------------------------------
+        Logger(INFO) << "      > Update ghosts (P)";
+        particles.updateGhostState(ghosts);
+        Logger(DEBUG) << "       > Add acceleration ghost";
+        particles.accelerate(ghosts, config.h);
+        particles.damping(ghosts, config.h);
+#endif // NOT TRANSPARENT
         
 #if BOUNDARIES != TRANSPARENT
 // boundary--- ----------------------------------------------------------------------------------------------- 

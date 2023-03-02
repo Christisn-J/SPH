@@ -13,7 +13,7 @@
 ### Stage 2: DOMAIN (---)
 - boundaries                    DONE
 - conditions (periodic)         DONE
-- virtual particles             TODO
+- virtual particles             DONE
 - debug (testcase)              TODO
 
 ### Stage 3: TESTCASES (--)

@@ -25,8 +25,8 @@ def createPlot(h5File, outDir, plotGrad, plotVel, iNNL):
     if "Ghosts" not in str(h5File):
         #ax.set_xlim((-.75, .75))
         #ax.set_ylim((-.75, .75))
-        ax.set_xlim((-.5, .5))
-        ax.set_ylim((-.5, .5))
+        ax.set_xlim((-1.5, 1.5))
+        ax.set_ylim((-1.5, 1.5))
     
     # Plot gradient
     if plotGrad and not plotVel:
@@ -124,7 +124,7 @@ def createPressurePlot(h5File, outDir):
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Plot density of results from Kelvin-Helmholtz test case.")
     parser.add_argument("--simOutputDir", "-d", metavar="string", type=str, help="output directory of simulation", required=True)
-    parser.add_argument("--outDir", "-o", metavar="string", type=str, help="output directory for generated plots", default="output")
+    parser.add_argument("--outDir", "-o", metavar="string", type=str, help="output directory for generated plots", default="out")
     parser.add_argument("--plotGradient", "-g", action="store_true", help="plot density gradients")
     parser.add_argument("--plotGhosts", "-G", action="store_true", help="also plot ghost cells in an extra file")
     parser.add_argument("--pressure", "-P", action="store_true", help="plot pressure instead of density")

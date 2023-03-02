@@ -50,3 +50,7 @@ out/
 
 # Visual Studio Code
 .vscode/
+
+# debuging files and folders
+2debug*
+2debug/
